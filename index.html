@@ -116,6 +116,20 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .mini .dow{font-size:10px;padding:1px 0}
 .who-legend{display:flex;gap:10px;font-size:12px;color:var(--sub);margin-top:10px;line-height:1.5}
 .dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.day-card .cover{aspect-ratio:4/3;border-radius:14px;margin-bottom:4px}
+.day-card .dh{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px}
+.day-card .dh .t{flex:1;min-width:0}
+.day-card .dh b{font-size:15px}
+.day-card .memo{color:#6f6664;font-size:13px;margin-top:3px;white-space:pre-wrap;line-height:1.5}
+.ord{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.ord .it{position:relative}
+.ord .it .p{aspect-ratio:1;border-radius:10px;background:var(--land) center/cover;display:block}
+.ord .it.cv .p{outline:3px solid var(--accent);outline-offset:-3px}
+.ord .it .no{position:absolute;left:5px;top:5px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;border-radius:99px;padding:1px 7px}
+.ord .it .cvb{position:absolute;right:5px;top:5px;background:var(--accent);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:2px 6px}
+.ord .bt{display:flex;gap:4px;margin-top:4px}
+.ord .bt button{flex:1;border:0;background:var(--soft);border-radius:8px;padding:5px 0;font-size:12px;color:#6f6664}
+.ord .bt button.on{background:var(--accent);color:#fff}
 .day-sec{font-size:13px;font-weight:700;margin:16px 0 6px;color:#6f6664}
 /* 목록 */
 .list .item{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
@@ -382,15 +396,41 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     c.getContext("2d").drawImage(im, 0, 0, c.width, c.height);
     return c.toDataURL("image/jpeg", q);
   }
+  // 사진 파일 안에 저장된 "찍은 날짜"(EXIF)를 읽는다. 사진 속 글자·파일 이름·파일 수정 날짜는 쓰지 않음. 없으면 ""
+  function exifDate(file) {
+    return file.slice(0, 512 * 1024).arrayBuffer().then(function (buf) {
+      var v = new DataView(buf);
+      if (v.byteLength < 4 || v.getUint16(0) !== 0xFFD8) return "";
+      var off = 2;
+      while (off + 10 < v.byteLength) {
+        var marker = v.getUint16(off), len = v.getUint16(off + 2);
+        if ((marker & 0xFF00) !== 0xFF00) break;
+        if (marker === 0xFFE1 && v.getUint32(off + 4) === 0x45786966) {
+          var t = off + 10, le = v.getUint16(t) === 0x4949;
+          var g16 = function (o) { return v.getUint16(t + o, le); }, g32 = function (o) { return v.getUint32(t + o, le); };
+          var ifd = function (o) { var n = g16(o), r = {}; for (var i = 0; i < n; i++) { var e = o + 2 + i * 12; r[g16(e)] = { cnt: g32(e + 4), at: e + 8 }; } return r; };
+          var str = function (en) { var q = en.cnt > 4 ? g32(en.at) : en.at, out = ""; for (var i = 0; i < en.cnt - 1 && t + q + i < v.byteLength; i++) out += String.fromCharCode(v.getUint8(t + q + i)); return out; };
+          var i0 = ifd(g32(4)), d = "";
+          if (i0[0x8769]) { var ex = ifd(g32(i0[0x8769].at)); d = (ex[0x9003] && str(ex[0x9003])) || (ex[0x9004] && str(ex[0x9004])) || ""; }
+          if (!d && i0[0x0132]) d = str(i0[0x0132]);
+          var m = /^(\d{4}):(\d{2}):(\d{2})/.exec(d);
+          return m && m[1] !== "0000" ? m[1] + "-" + m[2] + "-" + m[3] : "";
+        }
+        off += 2 + len;
+      }
+      return "";
+    }).catch(function () { return ""; });
+  }
   function addPhotoFromFile(file, takenDate) {
-    return loadImg(file).then(function (x) {
-      var id = uid();
+    return Promise.all([loadImg(file), takenDate ? Promise.resolve(takenDate) : exifDate(file)]).then(function (r) {
+      var x = r[0], id = uid();
       var t = shrink(x.im, THUMB_MAX, THUMB_Q), f = shrink(x.im, FULL_MAX, FULL_Q);
       URL.revokeObjectURL(x.url);
-      var taken = takenDate || ymd(new Date(file.lastModified || Date.now()));
-      return addPhotoData(id, t, f, taken, myName());
+      return addPhotoData(id, t, f, r[1] || "", myName());
     });
   }
+  // 날짜 없는 사진을 일정·맛집 등에 붙였으면 그 기록 날짜로 채움
+  function fillPhotoDate(id, date) { if (id && date && db.photos[id] && !photoMeta(id).date) putRec("pmeta", id, { date: date }); }
   var pendingPh = {}; // 올리기 전 사진 (기기 보관함이 안 될 때 대비해 메모리에도 둠)
   function addPhotoData(id, t, f, taken, by) {
     thumbs[id] = t; pendingPh[id] = { t: t, f: f };
@@ -412,44 +452,105 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     if (!f || !r) return;
     addPhotoFromFile(f).then(r, function (err) { toast(err.message); });
   });
-  // 앨범 올리기: 사진을 고른 뒤 날짜·위치·내용을 적고 올린다 (고른 사진 전부에 같은 정보)
+  // 앨범 올리기: 사진마다 저장된 찍은 날짜로 그날 기록에 들어감. 날짜 정보 없는 사진만 날짜를 직접 고름
   $("#fileMulti").addEventListener("change", function (e) {
     var files = Array.prototype.slice.call(e.target.files);
     if (!files.length) return;
-    var d0 = files.map(function (f) { return f.lastModified || Date.now(); }).sort()[0];
-    var h = "<h3>📷 사진 " + files.length + "장 올리기</h3>" +
-      '<div class="grid" id="upPrev" style="margin-bottom:6px"></div>' +
-      '<div class="field"><label>날짜</label><input type="date" name="date" value="' + ymd(new Date(d0)) + '"></div>' +
-      '<div class="field"><label>위치 (선택)</label><input name="place" maxlength="80" placeholder="예: 성수동 카페거리"></div>' +
-      '<div class="field"><label>내용 (선택)</label><textarea name="memo" maxlength="500" placeholder="그날 있었던 일"></textarea></div>' +
-      '<div class="btns"><button class="btn ghost" data-x>취소</button><button class="btn" data-save>올리기</button></div>';
-    sheet(h, function (el, close) {
-      var prev = $("#upPrev", el), urls = [];
-      files.slice(0, 6).forEach(function (f) { var u = URL.createObjectURL(f); urls.push(u); prev.insertAdjacentHTML("beforeend", '<div class="p" style="background-image:url(' + u + ')"></div>'); });
-      function done() { urls.forEach(function (u) { URL.revokeObjectURL(u); }); close(); }
-      $("[data-x]", el).onclick = done;
-      $("[data-save]", el).onclick = function () {
-        var meta = { date: $("[name=date]", el).value, place: $("[name=place]", el).value.trim(), memo: $("[name=memo]", el).value.trim() };
-        done();
-        toast("사진 " + files.length + "장 준비 중…");
-        files.reduce(function (p, f) {
-          return p.then(function () { return addPhotoFromFile(f, meta.date).then(function (id) { putRec("pmeta", id, meta); }).catch(function () {}); });
-        }, Promise.resolve()).then(function () { toast("사진 " + files.length + "장 추가했어요"); render(); });
-      };
+    Promise.all(files.map(exifDate)).then(function (dates) {
+      var cnt = {}, none = 0;
+      dates.forEach(function (d) { if (d) cnt[d] = (cnt[d] || 0) + 1; else none++; });
+      var days = Object.keys(cnt).sort();
+      var h = "<h3>사진 " + files.length + "장 올리기</h3>" +
+        '<div class="grid4" id="upPrev" style="margin-bottom:10px"></div>' +
+        (days.length ? '<div class="muted" style="line-height:1.7">사진에 저장된 <b style="color:var(--ink)">찍은 날짜</b>로 넣어요<br>' + days.map(function (d) { var x = parseYmd(d); return x.getFullYear() + "." + (x.getMonth() + 1) + "." + x.getDate() + " (" + DOW[x.getDay()] + ") " + cnt[d] + "장"; }).join(" · ") + "</div>" : "") +
+        (none ? '<div class="field"><label>찍은 날짜 정보가 없는 사진 ' + none + '장 → 날짜를 골라 주세요</label><input type="date" name="date"></div>' : "") +
+        '<div class="btns"><button class="btn ghost" data-x>취소</button><button class="btn" data-save>올리기</button></div>' +
+        '<p class="muted" style="font-size:12px;margin-top:10px">올린 뒤 앨범에서 날짜를 누르면 그날의 제목·장소·내용을 적고, 사진 순서와 대표 사진을 정할 수 있어요.</p>';
+      sheet(h, function (el, close) {
+        var prev = $("#upPrev", el), urls = [];
+        files.slice(0, 8).forEach(function (f) { var u = URL.createObjectURL(f); urls.push(u); prev.insertAdjacentHTML("beforeend", '<div class="p" style="background-image:url(' + u + ')"></div>'); });
+        function done() { urls.forEach(function (u) { URL.revokeObjectURL(u); }); close(); }
+        $("[data-x]", el).onclick = done;
+        $("[data-save]", el).onclick = function () {
+          var fb = none ? $("[name=date]", el).value : "";
+          if (none && !fb) return toast("날짜 정보가 없는 사진의 날짜를 골라 주세요");
+          done();
+          toast("사진 " + files.length + "장 준비 중…");
+          files.reduce(function (p, f, i) {
+            return p.then(function () { return addPhotoFromFile(f, dates[i] || fb).catch(function () {}); });
+          }, Promise.resolve()).then(function () { toast("사진 " + files.length + "장 추가했어요"); render(); });
+        };
+      });
     });
   });
   function photoMeta(id) { var p = db.photos[id] || {}, m = rec("pmeta", id) || {}; return { date: m.date || p.taken || "", place: m.place || "", memo: m.memo || "" }; }
-  function editPhotoMeta(id) {
-    var m = photoMeta(id);
-    sheet("<h3>✏️ 사진 정보</h3>" + '<div class="p" data-ph="' + id + '" style="height:160px;border-radius:12px;background:var(--land) center/cover' + (thumbs[id] ? ";background-image:url(" + thumbs[id] + ")" : "") + '"></div>' +
-      '<div class="field"><label>날짜</label><input type="date" name="date" value="' + esc(m.date) + '"></div>' +
-      '<div class="field"><label>위치</label><input name="place" maxlength="80" value="' + esc(m.place) + '"></div>' +
-      '<div class="field"><label>내용</label><textarea name="memo" maxlength="500">' + esc(m.memo) + "</textarea></div>" +
-      '<div class="btns"><button class="btn" data-save>저장</button></div>', function (el, close) {
+  // ---------- 하루 기록 (날짜별 다이어리: 제목·장소·내용, 사진 순서, 대표 사진) ----------
+  function dayRec(d) { return rec("day", d) || {}; }
+  function dayPhotos(d) {
+    var ord = dayRec(d).order || [];
+    return Object.keys(db.photos).filter(function (id) { return photoMeta(id).date === d; }).sort(function (a, b) {
+      var ia = ord.indexOf(a), ib = ord.indexOf(b); if (ia < 0) ia = 1e6; if (ib < 0) ib = 1e6;
+      return ia - ib || ((db.photos[a].created || "") + a).localeCompare((db.photos[b].created || "") + b);
+    });
+  }
+  function dayCover(d) { var r = dayRec(d), ps = dayPhotos(d); return r.cover && ps.indexOf(r.cover) >= 0 ? r.cover : (ps[0] || ""); }
+  function saveDay(d, patch) {
+    var cur = (db.rec.day && db.rec.day[d] && db.rec.day[d].data) || {};
+    putRec("day", d, Object.assign({}, cur, patch));
+  }
+  function dayLabel(d) { var x = parseYmd(d); return x ? x.getFullYear() + "년 " + (x.getMonth() + 1) + "월 " + x.getDate() + "일 (" + DOW[x.getDay()] + ")" : "날짜 없음"; }
+  function editDay(d) {
+    var r = dayRec(d), st = { order: dayPhotos(d), cover: dayCover(d) };
+    var h = "<h3>" + dayLabel(d) + "</h3>" +
+      '<div class="field"><label>제목</label><input name="title" maxlength="60" placeholder="예: 성수 카페 투어" value="' + esc(r.title || "") + '"></div>' +
+      '<div class="field"><label>장소</label><input name="place" maxlength="80" placeholder="예: 성수동" value="' + esc(r.place || "") + '"></div>' +
+      '<div class="field"><label>내용</label><textarea name="memo" maxlength="2000" placeholder="그날 있었던 일">' + esc(r.memo || "") + "</textarea></div>" +
+      '<div class="field"><label>사진 순서 · ★ 대표 사진</label><div class="ord" id="ord"></div></div>' +
+      '<button type="button" class="btn ghost block small" data-addph>＋ 이 날 사진 더 넣기</button>' +
+      '<div class="btns"><button class="btn" data-save>저장</button></div>';
+    sheet(h, function (el, close) {
+      function draw() {
+        var box = $("#ord", el);
+        if (!st.order.length) { box.innerHTML = '<div class="muted">이 날 사진이 아직 없어요</div>'; return; }
+        box.innerHTML = st.order.map(function (id, i) {
+          var cv = id === st.cover;
+          return '<div class="it' + (cv ? " cv" : "") + '"><div class="p" data-ph="' + id + '"' + phStyle(id) + '></div><span class="no">' + (i + 1) + "</span>" + (cv ? '<span class="cvb">대표</span>' : "") +
+            '<div class="bt"><button type="button" data-mv="' + i + ':-1"' + (i ? "" : " disabled") + '>◀</button><button type="button" class="' + (cv ? "on" : "") + '" data-cv="' + id + '">★</button><button type="button" data-mv="' + i + ':1"' + (i < st.order.length - 1 ? "" : " disabled") + ">▶</button></div></div>";
+        }).join("");
+        $$("[data-mv]", box).forEach(function (b) {
+          b.onclick = function () { var x = b.getAttribute("data-mv").split(":"), i = +x[0], j = i + +x[1]; if (j < 0 || j >= st.order.length) return; var t = st.order[i]; st.order[i] = st.order[j]; st.order[j] = t; draw(); };
+        });
+        $$("[data-cv]", box).forEach(function (b) { b.onclick = function () { st.cover = b.getAttribute("data-cv"); draw(); }; });
+        paintThumbs();
+      }
+      draw();
+      $("[data-addph]", el).onclick = function () {
+        var fi = document.createElement("input"); fi.type = "file"; fi.accept = "image/*"; fi.multiple = true;
+        fi.onchange = function () {
+          var fs = Array.prototype.slice.call(fi.files);
+          toast("사진 " + fs.length + "장 넣는 중…");
+          fs.reduce(function (p, f) { return p.then(function () { return addPhotoFromFile(f, d).then(function (id) { st.order.push(id); if (!st.cover) st.cover = id; }).catch(function () {}); }); }, Promise.resolve()).then(draw);
+        };
+        fi.click();
+      };
       $("[data-save]", el).onclick = function () {
-        putRec("pmeta", id, { date: $("[name=date]", el).value, place: $("[name=place]", el).value.trim(), memo: $("[name=memo]", el).value.trim() });
+        saveDay(d, { title: $("[name=title]", el).value.trim(), place: $("[name=place]", el).value.trim(), memo: $("[name=memo]", el).value.trim(), order: st.order, cover: st.cover || "" });
         close(); render();
       };
+    });
+  }
+  // 사진 한 장의 날짜 옮기기 (사진 속 찍은 날짜가 없거나 틀렸을 때)
+  function editPhotoMeta(id) {
+    var m = photoMeta(id);
+    sheet("<h3>사진 날짜</h3>" + '<div class="p" data-ph="' + id + '" style="height:160px;border-radius:12px;background:var(--land) center/cover' + (thumbs[id] ? ";background-image:url(" + thumbs[id] + ")" : "") + '"></div>' +
+      '<div class="field"><label>이 사진이 들어갈 날짜</label><input type="date" name="date" value="' + esc(m.date) + '"></div>' +
+      '<div class="btns">' + (m.date ? '<button class="btn ghost" data-day>이 날 기록 쓰기</button>' : "") + '<button class="btn" data-save>저장</button></div>', function (el, close) {
+      $("[data-save]", el).onclick = function () {
+        var cur = (db.rec.pmeta && db.rec.pmeta[id] && db.rec.pmeta[id].data) || {};
+        putRec("pmeta", id, Object.assign({}, cur, { date: $("[name=date]", el).value }));
+        close(); render();
+      };
+      var dy = $("[data-day]", el); if (dy) dy.onclick = function () { close(); editDay(m.date); };
     });
   }
 
@@ -497,8 +598,8 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   function openViewer(id) {
     var p = db.photos[id]; if (!p) return;
     var v = document.createElement("div"); v.className = "viewer";
-    var m = photoMeta(id);
-    v.innerHTML = '<img alt="" src="' + (thumbs[id] || "") + '"><div style="color:#fff;padding:10px 16px 0;font-size:14px;line-height:1.5"><b>' + esc(m.date.replace(/-/g, ".")) + "</b>" + (m.place ? " · 📍 " + esc(m.place) : "") + (m.memo ? '<div style="color:#ddd;white-space:pre-wrap">' + esc(m.memo) + "</div>" : "") + '</div><div class="vb"><button class="btn ghost small" data-x>닫기</button><button class="btn ghost small" data-meta>✏️ 정보</button><button class="btn warn small" data-del>지우기</button></div>';
+    var m = photoMeta(id), dr = m.date ? dayRec(m.date) : {};
+    v.innerHTML = '<img alt="" src="' + (thumbs[id] || "") + '"><div style="color:#fff;padding:10px 16px 0;font-size:14px;line-height:1.5"><b>' + esc(m.date ? m.date.replace(/-/g, ".") : "날짜 없음") + "</b>" + (dr.title ? " · " + esc(dr.title) : "") + (dr.place ? " · 📍 " + esc(dr.place) : "") + '</div><div class="vb"><button class="btn ghost small" data-x>닫기</button><button class="btn ghost small" data-meta>날짜 바꾸기</button><button class="btn warn small" data-del>지우기</button></div>';
     document.body.appendChild(v);
     var img = $("img", v);
     kvGet("f:" + id).then(function (f) {
@@ -709,6 +810,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   // 일정 + 날짜가 있는 맛집·볼거리 기록 (기록은 따로 복사하지 않고 그 날짜에 보여주기만 함)
   function dayItems() {
     var m = eventsByDay();
+    recs("day").forEach(function (x) { if (x.title) (m[x.id] = m[x.id] || []).push({ id: x.id, auto: "day", date: x.id, title: x.title, who: "us", photo: "" }); });
     [["food", "맛집 · "], ["media", "볼거리 · "]].forEach(function (c) {
       recs(c[0]).forEach(function (x) { if (x.date) (m[x.date] = m[x.date] || []).push({ id: x.id, auto: c[0], date: x.date, title: c[1] + x.title, who: "us", photo: x.photo }); });
     });
@@ -732,7 +834,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
       h += '<button class="' + cls + '" data-day="' + k + '"><span class="n">' + d.getDate() + "</span>";
       if (!mini) {
         var phE = calPhotos ? es.filter(function (e) { return e.photo && e.date === k; })[0] : null;
-        var phId = phE ? phE.photo : (calPhotos && calShow.us !== false && pbd[k] ? pbd[k][0] : "");
+        var phId = calPhotos && calShow.us !== false && pbd[k] ? dayCover(k) : (phE ? phE.photo : "");
         if (phId) h += '<span class="ph" data-ph="' + phId + '"' + phStyle(phId) + "></span>";
         es.slice(0, phId ? 1 : 2).forEach(function (e) { h += '<span class="ev ' + esc(e.who || "us") + (e.auto ? " auto" : "") + '">' + esc(e.title) + "</span>"; });
       }
@@ -765,21 +867,26 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   }
   function evRange(e) { return e.end && e.end !== e.date ? e.date.slice(5).replace("-", ".") + " ~ " + e.end.slice(5).replace("-", ".") : ""; }
   function openDay(k) {
-    var all = dayItems()[k] || [], d = parseYmd(k), s = settings();
-    var es = all.filter(function (e) { return !e.auto; }), au = all.filter(function (e) { return e.auto; }), ps = photosByDay()[k] || [];
+    var all = dayItems()[k] || [], d = parseYmd(k), s = settings(), dr = dayRec(k);
+    var es = all.filter(function (e) { return !e.auto; }), au = all.filter(function (e) { return e.auto && e.auto !== "day"; }), ps = dayPhotos(k);
     var h = "<h3>" + (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + DOW[d.getDay()] + ")</h3>";
+    h += '<div class="day-sec">하루 기록</div>' + ((dr.title || dr.place || dr.memo || ps.length) ?
+      '<div style="margin-bottom:8px"><b>' + esc(dr.title || "") + "</b>" + (dr.place ? ' <span class="muted">📍 ' + esc(dr.place) + "</span>" : "") + (dr.memo ? '<div class="muted" style="white-space:pre-wrap;margin-top:3px">' + esc(dr.memo) + "</div>" : "") + "</div>" +
+      (ps.length ? '<div class="grid4">' + ps.map(function (id) { return '<button class="p" data-view="' + id + '" data-ph="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div>" : "")
+      : '<div class="muted">아직 없어요</div>') +
+      '<button class="btn ghost block small" style="margin-top:8px" data-dayed>' + (dr.title || dr.memo || ps.length ? "하루 기록 고치기 · 사진 순서" : "하루 기록 쓰기") + "</button>";
     h += '<div class="day-sec">일정</div>' + (es.length ? '<div class="list">' + es.map(function (e) {
       return '<div class="item" data-ed="' + e.id + '">' + (e.photo ? '<div class="th" data-ph="' + e.photo + '"' + phStyle(e.photo) + "></div>" : "") + '<div class="tx"><b>' + esc(e.title) + '</b><span class="muted">' + esc(e.who === "a" ? s.nameA : e.who === "b" ? s.nameB : "우리") + (evRange(e) ? " · " + evRange(e) : "") + (e.memo ? " · " + esc(e.memo) : "") + "</span></div>›</div>";
     }).join("") + "</div>" : '<div class="muted">일정이 없어요</div>');
     if (au.length) h += '<div class="day-sec">기록</div><div class="list">' + au.map(function (e) {
       return '<div class="item" data-au="' + e.auto + ":" + e.id + '">' + (e.photo ? '<div class="th" data-ph="' + e.photo + '"' + phStyle(e.photo) + "></div>" : "") + '<div class="tx"><b>' + esc(e.title) + '</b><span class="muted">' + (e.auto === "food" ? "맛집 기록" : "볼거리 기록") + "</span></div>›</div>";
     }).join("") + "</div>";
-    if (ps.length) h += '<div class="day-sec">사진 ' + ps.length + '장</div><div class="grid4">' + ps.map(function (id) { return '<button class="p" data-view="' + id + '" data-ph="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div>";
     h += '<div class="btns"><button class="btn" data-add>＋ 일정 추가</button></div>';
     sheet(h, function (el, close) {
       $$("[data-ed]", el).forEach(function (it) { it.onclick = function () { close(); editEvent(rec("event", it.getAttribute("data-ed"))); }; });
       $$("[data-au]", el).forEach(function (it) { it.onclick = function () { var x = it.getAttribute("data-au").split(":"); close(); editNote(x[0], rec(x[0], x[1])); }; });
       $$("[data-view]", el).forEach(function (b) { b.onclick = function () { openViewer(b.getAttribute("data-view")); }; });
+      $("[data-dayed]", el).onclick = function () { close(); editDay(k); };
       $("[data-add]", el).onclick = function () { close(); editEvent(null, k); };
     });
   }
@@ -803,6 +910,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
         var end2 = $("[name=end]", el).value;
         if (end2 && end2 < date2) return toast("끝 날짜가 시작 날짜보다 빨라요");
         if (end2 && daysBetween(parseYmd(date2), parseYmd(end2)) > 89) return toast("일정은 90일까지만 넣을 수 있어요");
+        fillPhotoDate(ph.id, date2);
         putRec("event", e.id || uid(), { date: date2, end: end2 && end2 !== date2 ? end2 : "", title: title, who: who, memo: $("[name=memo]", el).value.trim(), photo: ph.id });
         close(); render();
       };
@@ -988,6 +1096,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
       $("[data-pick]", el).onclick = function () { pickPhoto().then(function (id) { st.photo = id; st.crop = { s: 1, dx: 0, dy: 0 }; zoom.value = 1; draw(); }); };
       draw();
       $("[data-save]", el).onclick = function () {
+        fillPhotoDate(st.photo, $("[name=date]", el).value);
         putRec("region", key, { name: name, photo: st.photo, date: $("[name=date]", el).value, crop: st.photo ? { s: +st.crop.s.toFixed(2), dx: +st.crop.dx.toFixed(3), dy: +st.crop.dy.toFixed(3) } : null });
         close(); render();
       };
@@ -1002,27 +1111,25 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
       .sort(function (a, b) { return (photoMeta(b.id).date + b.created + b.id).localeCompare(photoMeta(a.id).date + a.created + a.id); });
   }
   function viewAlbum(v, fab) {
-    var ps = sortedPhotos(), h = "", curM = null, curG = null;
-    if (!ps.length) h = '<div class="card"><div class="empty">데이트 사진을 올려 보세요<br><br><button class="btn" data-up>📷 사진 올리기</button></div></div>';
-    ps.forEach(function (p) {
-      var m = photoMeta(p.id), mo = m.date.slice(0, 7), g = m.date + "|" + m.place + "|" + m.memo;
-      if (mo !== curM) {
-        if (curG !== null) h += "</div></div>";
-        curM = mo; curG = null;
-        h += '<div class="month">' + (mo ? mo.replace("-", "년 ") + "월" : "날짜 없음") + "</div>";
-      }
-      if (g !== curG) {
-        if (curG !== null) h += "</div></div>";
-        curG = g;
-        var d = parseYmd(m.date);
-        h += '<div class="album-grp"><div class="gh"><b>' + (d ? (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + DOW[d.getDay()] + ")" : "") + "</b>" + (m.place ? ' <span class="muted">📍 ' + esc(m.place) + "</span>" : "") +
-          (m.memo ? '<div class="memo">' + esc(m.memo) + "</div>" : "") + '</div><div class="grid">';
-      }
-      h += '<button class="p' + (thumbUrl(p.id) ? "" : " wait") + '" data-ph="' + p.id + '" data-view="' + p.id + '"' + phStyle(p.id) + "></button>";
+    var by = {};
+    Object.keys(db.photos).forEach(function (id) { var d = photoMeta(id).date || ""; (by[d] = by[d] || 1); });
+    var days = Object.keys(by).sort().reverse(), n = Object.keys(db.photos).length, h = "", curM = null;
+    if (!n) h = '<div class="card"><div class="empty">데이트 사진을 올려 보세요<br><br><button class="btn" data-up>사진 올리기</button></div></div>';
+    days.forEach(function (d) {
+      var mo = d.slice(0, 7);
+      if (mo !== curM) { curM = mo; h += '<div class="month">' + (mo ? mo.replace("-", "년 ") + "월" : "날짜 없음") + "</div>"; }
+      var r = d ? dayRec(d) : {}, ps = d ? dayPhotos(d) : Object.keys(db.photos).filter(function (id) { return !photoMeta(id).date; });
+      var cv = d ? dayCover(d) : "", rest = ps.filter(function (id) { return id !== cv; });
+      h += '<div class="card day-card"><div class="dh"><div class="t"><b>' + (d ? dayLabel(d).replace(/^\d+년 /, "") : "날짜 없는 사진") + "</b>" + (r.title ? " · " + esc(r.title) : "") +
+        (r.place ? '<div class="muted">📍 ' + esc(r.place) + "</div>" : "") + (r.memo ? '<div class="memo">' + esc(r.memo) + "</div>" : "") + "</div>" +
+        (d ? '<button class="btn ghost small" data-dayed="' + d + '">' + (r.title || r.memo ? "고치기" : "기록 쓰기") + "</button>" : "") + "</div>" +
+        (cv ? '<button class="ph-tile cover" data-view="' + cv + '" data-ph="' + cv + '"' + phStyle(cv) + "></button>" : "") +
+        (rest.length ? '<div class="grid">' + rest.map(function (id) { return '<button class="p' + (thumbUrl(id) ? "" : " wait") + '" data-ph="' + id + '" data-view="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div>" : "") +
+        (!d ? '<div class="muted" style="margin-top:6px">사진을 누르고 "날짜 바꾸기"로 날짜를 정해 주세요</div>' : "") + "</div>";
     });
-    if (curG !== null) h += "</div></div>";
-    v.innerHTML = '<div class="note-head"><h2>앨범</h2><span class="badge soft">' + ps.length + "장</span></div>" + h;
+    v.innerHTML = '<div class="note-head"><h2>앨범</h2><span class="badge soft">' + n + "장</span></div>" + h;
     bindView(v);
+    $$("[data-dayed]", v).forEach(function (b) { b.onclick = function () { editDay(b.getAttribute("data-dayed")); }; });
     var up = $("[data-up]", v); if (up) up.onclick = function () { var f = $("#fileMulti"); f.value = ""; f.click(); };
     fab.classList.remove("hidden"); fab.onclick = function () { var f = $("#fileMulti"); f.value = ""; f.click(); };
   }
@@ -1093,6 +1200,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
       $("[data-save]", el).onclick = function () {
         var title = $("[name=title]", el).value.trim(); if (!title) return toast("이름을 적어 주세요");
         var pl = $("[name=place]", el);
+        fillPhotoDate(ph.id, $("[name=date]", el).value);
         putRec(c, x.id || uid(), { title: title, kind: kind, rating: +$(".rate", el).getAttribute("data-rate"), date: $("[name=date]", el).value, memo: $("[name=memo]", el).value.trim(), photo: ph.id, place: pl ? pl.value.trim() : "" });
         close(); render();
       };
@@ -1217,7 +1325,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   window.addEventListener("online", flush);
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pull(); });
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
-  window.__ug = { ready: ready, db: function () { return db; }, cloud: cloud, setApi: function (u) { API_URL = u; }, pull: pull, flush: flush, render: render, putRec: putRec, addPhotoData: addPhotoData };
+  window.__ug = { ready: ready, db: function () { return db; }, cloud: cloud, setApi: function (u) { API_URL = u; }, pull: pull, flush: flush, render: render, putRec: putRec, addPhotoData: addPhotoData, exifDate: exifDate, editDay: editDay, dayPhotos: dayPhotos, dayCover: dayCover };
 })();
 </script>
 </body>
