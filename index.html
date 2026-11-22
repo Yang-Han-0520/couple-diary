@@ -436,8 +436,11 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
       return addPhotoData(id, t, f, r[1] || "", myName());
     });
   }
-  // 날짜 없는 사진을 일정·맛집 등에 붙였으면 그 기록 날짜로 채움
-  function fillPhotoDate(id, date) { if (id && date && db.photos[id] && !photoMeta(id).date) putRec("pmeta", id, { date: date }); }
+  // 일정·맛집·볼거리·지도에 붙인 사진은 그 기록 날짜로 앨범에 들어감 (사진 속 날짜보다 기록 날짜가 우선)
+  function fillPhotoDate(id, date) {
+    if (!id || !date || !db.photos[id] || photoMeta(id).date === date) return;
+    var m = rec("pmeta", id) || {}; delete m.id; m.date = date; putRec("pmeta", id, m);
+  }
   var pendingPh = {}; // 올리기 전 사진 (기기 보관함이 안 될 때 대비해 메모리에도 둠)
   function addPhotoData(id, t, f, taken, by) {
     thumbs[id] = t; pendingPh[id] = { t: t, f: f };
@@ -1328,7 +1331,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   window.addEventListener("online", flush);
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pull(); });
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
-  window.__ug = { ready: ready, db: function () { return db; }, cloud: cloud, setApi: function (u) { API_URL = u; }, pull: pull, flush: flush, render: render, putRec: putRec, addPhotoData: addPhotoData, openViewer: openViewer, albumOrder: albumOrder, exifDate: exifDate, editDay: editDay, dayPhotos: dayPhotos, dayCover: dayCover };
+  window.__ug = { ready: ready, db: function () { return db; }, cloud: cloud, setApi: function (u) { API_URL = u; }, pull: pull, flush: flush, render: render, putRec: putRec, addPhotoData: addPhotoData, openViewer: openViewer, albumOrder: albumOrder, exifDate: exifDate, editDay: editDay, dayPhotos: dayPhotos, dayCover: dayCover, editNote: editNote, photoMeta: photoMeta };
 })();
 </script>
 </body>
