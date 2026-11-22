@@ -868,7 +868,13 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     if (mode === "near") {
       var hc = [s.homeA, s.homeB].filter(Boolean).map(function (x) { return x.replace(/^cap:/, ""); });
       var hf = feats.filter(function (f) { return hc.indexOf(f.properties.code) >= 0; });
-      if (hf.length >= 2) fitFeats = hf.concat(feats.filter(function (f) { return f.properties.prov === "서울"; }));
+      if (hf.length >= 2) {
+        // 서울 전체 + (사는 곳이 인천이면) 인천 시내·영종도까지. 강화군·옹진군 섬은 너무 멀어서 뺌
+        var incHome = hf.some(function (f) { return f.properties.prov === "인천"; });
+        fitFeats = hf.concat(feats.filter(function (f) {
+          return f.properties.prov === "서울" || (incHome && f.properties.prov === "인천" && f.properties.code !== "23310" && f.properties.code !== "23320");
+        }));
+      }
     }
     fitFeats.forEach(function (f) { polysOf(f.geometry).forEach(function (pl) { pl[0].forEach(function (p) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1]; }); }); });
     if (mode === "near") { var padX = (maxX - minX) * 0.05, padY = (maxY - minY) * 0.07; minX -= padX; maxX += padX; minY -= padY; maxY += padY; }
