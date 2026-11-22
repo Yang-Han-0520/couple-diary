@@ -1287,8 +1287,8 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
       '<div class="btns"><button class="btn" data-save>저장</button></div>' +
       '<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">' +
       '<div class="muted">저장 상태: ' + (cloudOn() ? "둘이 같이 보는 중 (서버 연결됨)" : API_URL ? "전용 링크로 열지 않음 → 이 기기에만 저장" : "서버 연결 전 → 이 기기에만 저장") + " · 못 보낸 변경 " + cloud.outbox.length + "개</div>" +
-      '<div class="btns"><button class="btn ghost small" data-speed>⏱ 속도 재기</button><button class="btn ghost small" data-fake>🧪 시험 사진 20장</button><button class="btn ghost small" data-unfake>시험 사진 지우기</button></div>' +
-      '<pre class="muted" id="speedOut" style="white-space:pre-wrap;font-size:12px"></pre>';
+      '<div class="btns"><button class="btn ghost small" data-inst>📲 앱으로 설치하기</button></div>' +
+      (standalone() ? '<div class="muted" style="margin-top:6px">지금 앱으로 열려 있어요</div>' : "");
     sheet(h, function (el, close) {
       var geoOk = false;
       loadGeo("geo/capital.json").then(function (geo) {
@@ -1303,59 +1303,8 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
           homeA: geoOk ? $("[name=homeA]", el).value : s.homeA, homeB: geoOk ? $("[name=homeB]", el).value : s.homeB }));
         close(); render();
       };
-      $("[data-speed]", el).onclick = function () { speedTest($("#speedOut", el)); };
-      $("[data-fake]", el).onclick = function () { fakePhotos(20, $("#speedOut", el)); };
-      $("[data-unfake]", el).onclick = function () {
-        var ids = Object.keys(db.photos).filter(function (id) { return db.photos[id].by === "시험"; });
-        ids.forEach(function (id) { delete db.photos[id]; delete thumbs[id]; kvDel("t:" + id); kvDel("f:" + id); queue({ a: "delPhoto", id: id }); });
-        saveLocal(); $("#speedOut", el).textContent = "시험 사진 " + ids.length + "장 지움"; render();
-      };
+      $("[data-inst]", el).onclick = function () { close(); doInstall(); };
     });
-  }
-  // 속도 재기: 목록 불러오기 + 작은 사진 30장 받기 시간을 잰다 (기기 보관함은 쓰지 않음)
-  function speedTest(out) {
-    if (!cloudOn()) { out.textContent = "서버 연결 후에 잴 수 있어요"; return; }
-    var lines = [], t0 = performance.now();
-    function log(s) { lines.push(s); out.textContent = lines.join("\n"); }
-    log("재는 중…");
-    api({ a: "ping" }).then(function (d) {
-      log("① 연결 확인: " + Math.round(performance.now() - t0) + "ms (서버 안 " + d.ms + "ms)");
-      var t1 = performance.now();
-      return api({ a: "load" }).then(function (d2) {
-        log("② 목록 불러오기: " + Math.round(performance.now() - t1) + "ms · 기록 " + d2.records.length + "개, 사진 " + d2.photos.length + "장 (서버 안 " + d2.ms + "ms)");
-        var ids = d2.photos.slice(0, 30).map(function (p) { return p.id; });
-        if (!ids.length) return log("③ 사진이 없어서 사진 속도는 못 쟀어요");
-        var t2 = performance.now();
-        return api({ a: "thumbs", ids: ids }).then(function (d3) {
-          var n = Object.keys(d3.thumbs).length, kb = Math.round(Object.keys(d3.thumbs).reduce(function (s, k) { return s + d3.thumbs[k].length; }, 0) * 0.75 / 1024);
-          log("③ 작은 사진 " + n + "장: " + Math.round(performance.now() - t2) + "ms · " + kb + "KB (서버 안 " + d3.ms + "ms)");
-          if (ids[0]) { var t3 = performance.now(); return api({ a: "full", id: ids[0] }).then(function (d4) { log("④ 큰 사진 1장: " + Math.round(performance.now() - t3) + "ms · " + Math.round((d4.full || "").length * 0.75 / 1024) + "KB (서버 안 " + d4.ms + "ms)"); }); }
-        });
-      });
-    }).then(function () { log("측정 끝 " + new Date().toLocaleString()); }, function (e) { log("오류: " + e.message); });
-  }
-  // 시험용 사진 만들기 (실제 사진 크기와 비슷하게 노이즈를 넣음)
-  function fakePhotos(n, out) {
-    var made = 0;
-    function one() {
-      var c = document.createElement("canvas"); c.width = 1600; c.height = 1200; var g = c.getContext("2d");
-      var hue = Math.floor(Math.random() * 360), gr = g.createLinearGradient(0, 0, 1600, 1200);
-      gr.addColorStop(0, "hsl(" + hue + ",60%,70%)"); gr.addColorStop(1, "hsl(" + ((hue + 80) % 360) + ",60%,45%)");
-      g.fillStyle = gr; g.fillRect(0, 0, 1600, 1200);
-      var im = g.getImageData(0, 0, 1600, 1200), dd = im.data;
-      for (var i = 0; i < dd.length; i += 4) { var r = (Math.random() - 0.5) * 50; dd[i] += r; dd[i + 1] += r; dd[i + 2] += r; }
-      g.putImageData(im, 0, 0);
-      g.fillStyle = "#fff"; g.font = "bold 160px sans-serif"; g.fillText("시험 " + (made + 1), 120, 650);
-      var full = c.toDataURL("image/jpeg", FULL_Q);
-      var c2 = document.createElement("canvas"); c2.width = 480; c2.height = 360; c2.getContext("2d").drawImage(c, 0, 0, 480, 360);
-      var d = new Date(); d.setDate(d.getDate() - Math.floor(Math.random() * 120));
-      return addPhotoData(uid(), c2.toDataURL("image/jpeg", THUMB_Q), full, ymd(d), "시험");
-    }
-    (function loop() {
-      if (made >= n) { out.textContent = "시험 사진 " + n + "장 만들었어요. 다 올라간 뒤(위쪽 ☁️ 저장됨) 속도 재기를 눌러 주세요."; render(); return; }
-      out.textContent = "만드는 중 " + made + "/" + n;
-      one().then(function () { made++; setTimeout(loop, 0); });
-    })();
   }
 
   // ================= 시작 =================
