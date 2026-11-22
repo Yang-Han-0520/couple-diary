@@ -3,19 +3,20 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>우리 기록</title>
-<meta name="theme-color" content="#f7f1ea">
+<title>만능다이어리</title>
+<meta name="theme-color" content="#fff0f4">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="우리 기록">
+<meta name="apple-mobile-web-app-title" content="만능다이어리">
 <style>
 :root{
-  --bg:#f7f1ea; --card:#fffdf9; --ink:#2d2622; --sub:#8a7f77; --line:#e8ded3;
-  --accent:#e2725b; --accent-soft:#f9ddd4; --a:#e98ba0; --b:#6fa3d8; --us:#e6b34a;
-  --ok:#5aa469; --land:#efe6da; --land-line:#d9cbbb; --shadow:0 2px 0 #eadfd3;
+  --bg:#fff0f4; --card:#ffffff; --ink:#3d2a33; --sub:#a0848f; --line:#f7d3de;
+  --accent:#ff6b96; --accent-soft:#ffdbe6; --a:#ff7ea6; --b:#6fa3d8; --us:#f4a93c;
+  --ok:#ff7ea6; --land:#fbe7ee; --land-line:#efc6d3; --shadow:0 3px 0 #f9d9e3;
+  --seoul:#c2185b; --home:#ff3d7f;
 }
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Malgun Gothic","Noto Sans KR",sans-serif;font-size:15px}
@@ -24,7 +25,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 button{cursor:pointer}
 .wrap{max-width:560px;margin:0 auto;padding:0 16px calc(84px + env(safe-area-inset-bottom))}
 header{position:sticky;top:0;z-index:5;background:var(--bg);display:flex;align-items:center;gap:8px;padding:calc(10px + env(safe-area-inset-top)) 16px 8px;max-width:560px;margin:0 auto}
-header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header h1{font-size:20px;color:var(--accent);letter-spacing:-.5px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .icon-btn{border:0;background:transparent;font-size:20px;padding:6px;border-radius:10px}
 .sync{font-size:12px;color:var(--sub);white-space:nowrap}
 .sync.err{color:var(--accent)}
@@ -37,10 +38,10 @@ header h1{font-size:19px;margin:0;flex:1;white-space:nowrap;overflow:hidden;text
 .names .a{color:var(--a);font-weight:700}.names .b{color:var(--b);font-weight:700}
 .chips{display:flex;gap:6px;flex-wrap:wrap}
 .chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:6px 12px;font-size:13px}
-.chip.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .row{display:flex;align-items:center;gap:8px}
 .muted{color:var(--sub);font-size:13px}
-.btn{border:1.5px solid var(--ink);background:var(--ink);color:#fff;border-radius:12px;padding:10px 14px;font-weight:600}
+.btn{border:1.5px solid var(--accent);background:var(--accent);color:#fff;border-radius:12px;padding:10px 14px;font-weight:600}
 .btn.ghost{background:var(--card);color:var(--ink);border-color:var(--line)}
 .btn.warn{background:var(--card);color:var(--accent);border-color:var(--accent-soft)}
 .btn.small{padding:6px 10px;font-size:13px;border-radius:10px}
@@ -50,7 +51,7 @@ nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-to
 nav.tabs .in{display:flex;max-width:560px;width:100%}
 nav.tabs button{flex:1;border:0;background:none;padding:9px 0 8px;font-size:11px;color:var(--sub);display:flex;flex-direction:column;align-items:center;gap:2px}
 nav.tabs button span{font-size:20px;filter:grayscale(1);opacity:.6}
-nav.tabs button.on{color:var(--ink);font-weight:700}
+nav.tabs button.on{color:var(--accent);font-weight:700}
 nav.tabs button.on span{filter:none;opacity:1}
 /* 캘린더 */
 .cal-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
@@ -62,7 +63,7 @@ nav.tabs button.on span{filter:none;opacity:1}
 .cal .d.out{opacity:.3}
 .cal .d .n{font-size:12px;font-weight:600;width:22px;height:22px;display:flex;align-items:center;justify-content:center;border-radius:50%}
 .cal .d.heart .n{background:var(--accent-soft)}
-.cal .d.today .n{background:var(--ink);color:#fff!important}
+.cal .d.today .n{background:var(--accent);color:#fff!important}
 .cal .d .ph{width:100%;aspect-ratio:1;border-radius:6px;background-size:cover;background-position:center}
 .cal .d .ev{font-size:10px;line-height:1.25;border-radius:4px;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev.a{background:#fbe3e9}.ev.b{background:#e0ecf8}.ev.us{background:#faefd4}
@@ -82,7 +83,7 @@ nav.tabs button.on span{filter:none;opacity:1}
 .map-box path.rg{fill:var(--land);stroke:var(--land-line);stroke-width:.6;vector-effect:non-scaling-stroke;cursor:pointer}
 .map-box path.rg.v{fill:var(--accent-soft)}
 .map-box path.edge{fill:none;stroke:#fff;stroke-width:1.2;vector-effect:non-scaling-stroke;pointer-events:none}
-.map-box text{font-size:9px;fill:#6b5f57;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:#fffdf9;stroke-width:2.5px;stroke-linejoin:round}
+.map-box text{font-size:9px;fill:#7a5a66;pointer-events:none;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:2.5px;stroke-linejoin:round}
 .stat{font-size:13px;color:var(--sub)}.stat b{color:var(--ink);font-size:16px}
 /* 앨범 */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:4px}
@@ -115,12 +116,34 @@ nav.tabs button.on span{filter:none;opacity:1}
 .toast{position:fixed;left:50%;bottom:calc(140px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;max-width:90vw}
 .empty{text-align:center;color:var(--sub);padding:24px 0;font-size:14px}
 .hidden{display:none!important}
-.banner{background:#fff4e5;border:1.5px solid #f3d9b1;border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
+/* 홈 2열 블록 */
+.hg{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.hg .card{margin:0;padding:12px;min-width:0}
+.hg .wide{grid-column:span 2}
+.hg .card h2{font-size:13px;margin-bottom:8px}
+.dd-tile{position:relative;overflow:hidden;background:linear-gradient(160deg,#ff9bb8,#ff6b96);color:#fff;border-color:transparent;display:flex;flex-direction:column;justify-content:flex-end;min-height:170px;background-size:cover;background-position:center}
+.dd-tile.ph::before{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(0,0,0,0) 35%,rgba(60,10,30,.6))}
+.dd-tile>*{position:relative}
+.dd-tile .lb{font-size:12px;opacity:.95}
+.dd-tile .big{font-size:30px;font-weight:800;letter-spacing:-1px;line-height:1.1}
+.dd-tile .nm{font-size:12px;margin-top:4px;opacity:.95}
+.hg .mini .d .n{font-size:10px;width:18px;height:18px}
+.hg .mini .dow{font-size:9px;padding:1px 0}
+.hg .grid{grid-template-columns:repeat(4,1fr)}
+.map-mini svg{width:100%;height:auto;display:block}
+.map-mini text{display:none}
+.map-box .home text,.map-mini .home text{display:block;font-weight:700;fill:var(--home);font-size:13px}
+.map-box path.sb{fill:none;stroke:var(--seoul);stroke-width:2.6;vector-effect:non-scaling-stroke;pointer-events:none;stroke-linejoin:round}
+.map-box path.ib{fill:none;stroke:#8e5cc9;stroke-width:2;stroke-dasharray:5 3;vector-effect:non-scaling-stroke;pointer-events:none;stroke-linejoin:round}
+.an-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-top:1px solid var(--line)}
+.an-row:first-of-type{border-top:0}
+.an-row b{color:var(--accent)}
+.banner{background:#fff;border:1.5px dashed var(--accent);border-radius:12px;padding:10px 12px;font-size:13px;margin:8px 0}
 </style>
 </head>
 <body>
 <header>
-  <h1 id="appTitle">우리 기록</h1>
+  <h1 id="appTitle">만능다이어리</h1>
   <span class="sync" id="sync"></span>
   <button class="icon-btn" id="btnSettings" aria-label="설정">⚙️</button>
 </header>
@@ -197,10 +220,9 @@ nav.tabs button.on span{filter:none;opacity:1}
   function recs(c) { var m = db.rec[c] || {}; return Object.keys(m).map(function (id) { return Object.assign({ id: id }, m[id].data || {}); }); }
   function rec(c, id) { var m = db.rec[c] || {}; return m[id] ? Object.assign({ id: id }, m[id].data) : null; }
   function settings() {
-    return Object.assign({ title: "우리 기록", nameA: "나", nameB: "너", start: "" }, (rec("settings", "main") || {}));
+    return Object.assign({ title: "만능다이어리", nameA: "나", nameB: "너", start: "", homeA: "", homeB: "" }, (rec("settings", "main") || {}));
   }
-  function me() { return lsGet("ug_me", ""); }
-  function myName() { var s = settings(); return me() === "b" ? s.nameB : me() === "a" ? s.nameA : ""; }
+  function myName() { return ""; } // 둘이 같이 쓰므로 기기별 사용자 구분은 하지 않음
   function saveLocal() { return kvSet("db", db); }
 
   function putRec(c, id, data) {
@@ -453,8 +475,8 @@ nav.tabs button.on span{filter:none;opacity:1}
   }
   function render() {
     var s = settings();
-    $("#appTitle").textContent = s.title || "우리 기록";
-    document.title = s.title || "우리 기록";
+    $("#appTitle").textContent = s.title || "만능다이어리";
+    document.title = s.title || "만능다이어리";
     renderTabs();
     var v = $("#view"), fab = $("#fab");
     fab.classList.add("hidden"); fab.onclick = null;
@@ -469,45 +491,79 @@ nav.tabs button.on span{filter:none;opacity:1}
     for (var y = 1; y <= 50; y++) { var e = new Date(start); e.setFullYear(e.getFullYear() + y); if (e >= t) { out.push({ label: y + "주년", d: e }); break; } }
     return out.sort(function (a, b) { return a.d - b.d; }).slice(0, 3);
   }
-  function viewHome(v) {
-    var s = settings(), start = parseYmd(s.start), h = "";
-    if (!cloudOn()) h += '<div class="banner">' + (API_URL ? "전용 링크로 열어야 둘이 같이 볼 수 있어요. 지금은 이 기기에만 저장돼요." : "아직 저장 서버 연결 전이에요. 지금은 이 기기에만 저장돼요.") + "</div>";
-    if (start) {
-      var n = daysBetween(start, today()) + 1;
-      h += '<div class="card"><h2>💗 우리가 만난 지</h2><div class="dday">' + n.toLocaleString() + '일째<small>' + esc(s.start.replace(/-/g, ".")) + ' 부터</small></div>' +
-        '<div class="names"><span class="a">' + esc(s.nameA) + '</span> ♥ <span class="b">' + esc(s.nameB) + "</span></div>";
-      var an = anniversaries(start);
-      if (an.length) h += '<div class="list" style="margin-top:10px">' + an.map(function (a) {
-        return '<div class="item"><div class="tx"><b>' + a.label + '</b><span class="muted">' + ymd(a.d).replace(/-/g, ".") + " (" + DOW[a.d.getDay()] + ")</span></div><span class='muted'>D-" + daysBetween(today(), a.d) + "</span></div>";
-      }).join("") + "</div>";
-      h += "</div>";
-    } else {
-      h += '<div class="card"><h2>💗 시작하기</h2><p class="muted">만난 날과 두 사람 이름을 먼저 정해 주세요.</p><button class="btn" data-go="settings">설정하기</button></div>';
+  // 설치 안내 (안드로이드 크롬·삼성 인터넷은 버튼 한 번, 아이폰은 공유 → 홈 화면에 추가)
+  var deferredInstall = null;
+  window.addEventListener("beforeinstallprompt", function (e) { e.preventDefault(); deferredInstall = e; if (tab === "home") render(); });
+  window.addEventListener("appinstalled", function () { deferredInstall = null; lsSet("ug_inst", "1"); render(); });
+  function standalone() { return (window.matchMedia && window.matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true; }
+  function installCard() {
+    if (standalone() || lsGet("ug_inst", "")) return "";
+    return '<div class="banner row"><span style="flex:1">📲 홈 화면에 앱으로 설치해 두면 더 편해요</span><button class="btn small" data-install>설치</button><button class="btn ghost small" data-noinst>✕</button></div>';
+  }
+  function doInstall() {
+    if (deferredInstall) {
+      deferredInstall.prompt();
+      deferredInstall.userChoice.then(function (c) { if (c.outcome === "accepted") lsSet("ug_inst", "1"); deferredInstall = null; render(); });
+      return;
     }
-    var t = today();
-    h += '<div class="card"><h2>📅 ' + (t.getMonth() + 1) + '월<button class="more" data-go="cal">크게 보기 ›</button></h2>' + calGrid(t.getFullYear(), t.getMonth(), true) + "</div>";
-    var ph = sortedPhotos().slice(0, 6);
-    h += '<div class="card"><h2>📷 최근 사진<button class="more" data-go="album">전체 ›</button></h2>' +
-      (ph.length ? '<div class="grid">' + ph.map(function (p) { return '<button class="p' + (thumbUrl(p.id) ? "" : " wait") + '" data-ph="' + p.id + '" data-view="' + p.id + '"' + phStyle(p.id) + "></button>"; }).join("") + "</div>" : '<div class="empty">아직 사진이 없어요</div>') + "</div>";
+    var ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+    sheet("<h3>📲 앱으로 설치하기</h3>" + (ios
+      ? "<p>1. <b>공유 버튼</b>(네모에 위쪽 화살표)을 눌러요.<br><span class='muted'>사파리는 화면 아래, 크롬은 주소창 오른쪽에 있어요.</span></p><p>2. <b>홈 화면에 추가</b>를 눌러요.</p><p>3. 오른쪽 위 <b>추가</b>를 누르면 끝!</p>"
+      : "<p>1. 오른쪽 위 <b>⋮</b> (삼성 인터넷은 아래 <b>≡</b>) 메뉴를 눌러요.</p><p>2. <b>홈 화면에 추가</b> 또는 <b>앱 설치</b>를 눌러요.</p>") +
+      '<p class="muted">설치하면 주소창 없이 앱처럼 열려요.</p><div class="btns"><button class="btn" data-ok>알겠어요</button></div>',
+      function (el, close) { $("[data-ok]", el).onclick = close; });
+  }
+  function viewHome(v) {
+    var s = settings(), start = parseYmd(s.start), t = today(), h = "";
+    if (!cloudOn()) h += '<div class="banner">' + (API_URL ? "전용 링크로 열어야 둘이 같이 볼 수 있어요. 지금은 이 기기에만 저장돼요." : "아직 저장 서버 연결 전이에요. 지금은 이 기기에만 저장돼요.") + "</div>";
+    h += installCard();
+    var ph = sortedPhotos(), cover = ph[0] && ph[0].id;
+    h += '<div class="hg">';
+    if (start) {
+      var cu = cover ? thumbUrl(cover) : "";
+      h += '<div class="card dd-tile' + (cover ? " ph" : "") + '" data-go="album"' + (cover ? ' data-ph="' + cover + '"' + (cu ? ' style="background-image:url(' + cu + ')"' : "") : "") + '>' +
+        '<div class="lb">💗 우리가 만난 지</div><div class="big">' + (daysBetween(start, t) + 1).toLocaleString() + '일</div><div class="nm">' + esc(s.nameA) + " ♥ " + esc(s.nameB) + "</div></div>";
+    } else {
+      h += '<div class="card dd-tile" data-go="settings"><div class="lb">💗 시작하기</div><div class="big" style="font-size:20px">만난 날<br>정하기 ›</div></div>';
+    }
+    h += '<div class="card"><h2>📅 ' + (t.getMonth() + 1) + '월<button class="more" data-go="cal">크게 ›</button></h2>' + calGrid(t.getFullYear(), t.getMonth(), true) + "</div>";
+    if (start) {
+      h += '<div class="card wide"><h2>🎉 다가오는 기념일</h2>' + anniversaries(start).map(function (a) {
+        var dd = daysBetween(t, a.d);
+        return '<div class="an-row"><span>' + a.label + ' · ' + ymd(a.d).replace(/-/g, ".") + " (" + DOW[a.d.getDay()] + ")</span><b>" + (dd ? "D-" + dd : "오늘!") + "</b></div>";
+      }).join("") + "</div>";
+    }
+    h += '<div class="card wide"><h2>📷 최근 사진<button class="more" data-go="album">전체 ›</button></h2>' +
+      (ph.length ? '<div class="grid">' + ph.slice(0, 8).map(function (p) { return '<button class="p' + (thumbUrl(p.id) ? "" : " wait") + '" data-ph="' + p.id + '" data-view="' + p.id + '"' + phStyle(p.id) + "></button>"; }).join("") + "</div>" : '<div class="empty">앨범에서 데이트 사진을 올려 보세요</div>') + "</div>";
     var vis = visitedCount();
-    h += '<div class="card"><h2>🗺️ 데이트 지도<button class="more" data-go="map">지도 ›</button></h2><div class="stat">수도권 <b>' + vis.cap + "</b>/" + vis.capAll + " · 전국 <b>" + vis.kr + "</b>/" + vis.krAll + "</div></div>";
-    var bk = recs("bucket"), done = bk.filter(function (x) { return x.done; }).length;
-    h += '<div class="card"><h2>🪣 버킷리스트<button class="more" data-go="note:bucket">전체 ›</button></h2>' +
-      (bk.length ? '<div class="muted">' + done + "/" + bk.length + " 달성</div><div class='bar'><i style='width:" + Math.round(done / bk.length * 100) + "%'></i></div>" +
-        bk.filter(function (x) { return !x.done; }).slice(0, 3).map(function (x) { return '<div class="muted" style="margin-top:6px">○ ' + esc(x.title) + "</div>"; }).join("") : '<div class="empty">하고 싶은 걸 적어보세요</div>') + "</div>";
+    h += '<div class="card" data-go="map"><h2>🗺️ 데이트 지도</h2><div class="map-mini map-box" id="mapMini"></div><div class="stat" style="margin-top:6px">가본 곳 <b>' + vis.cap + "</b>/" + vis.capAll + "</div></div>";
+    var bk = recs("bucket"), done = bk.filter(function (x) { return x.done; }).length, pct = bk.length ? Math.round(done / bk.length * 100) : 0;
+    h += '<div class="card" data-go="note:bucket"><h2>🪣 버킷리스트</h2>' +
+      (bk.length ? '<div class="dday" style="font-size:26px;color:var(--accent)">' + pct + '%</div><div class="bar"><i style="width:' + pct + '%"></i></div><div class="muted">' + done + "/" + bk.length + " 달성</div>" +
+        bk.filter(function (x) { return !x.done; }).slice(0, 3).map(function (x) { return '<div class="muted" style="margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">○ ' + esc(x.title) + "</div>"; }).join("")
+        : '<div class="empty" style="padding:12px 0">같이 하고 싶은 걸<br>적어보세요</div>') + "</div>";
+    var fd = recs("food").sort(function (a, b) { return (b.date || "").localeCompare(a.date || ""); }).slice(0, 4);
+    if (fd.length) h += '<div class="card wide" data-go="note:food"><h2>🍝 맛집 기록</h2><div class="grid">' + fd.map(function (x) {
+      return '<div><div class="p" style="aspect-ratio:1;border-radius:8px;background:var(--land) center/cover' + (thumbUrl(x.photo) ? ";background-image:url(" + thumbUrl(x.photo) + ")" : "") + '"' + (x.photo ? ' data-ph="' + esc(x.photo) + '"' : "") + '></div><div class="muted" style="font-size:11px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + esc(x.title) + "</div></div>";
+    }).join("") + "</div></div>";
+    h += "</div>";
     v.innerHTML = h;
     bindGo(v); bindCal(v); bindView(v);
+    var ib = $("[data-install]", v); if (ib) ib.onclick = doInstall;
+    var nb = $("[data-noinst]", v); if (nb) nb.onclick = function () { lsSet("ug_inst", "1"); render(); };
+    loadGeo("geo/capital.json").then(function (geo) { var b = $("#mapMini"); if (b && tab === "home") drawMap(geo, "cap", b, null, true); }).catch(function () {});
   }
   function bindGo(v) {
     $$("[data-go]", v).forEach(function (b) {
-      b.onclick = function () {
+      b.onclick = function (ev) {
+        ev.stopPropagation();
         var g = b.getAttribute("data-go");
         if (g === "settings") return openSettings();
         var p = g.split(":"); tab = p[0]; if (p[1]) noteTab = p[1]; lsSet("ug_tab", tab); window.scrollTo(0, 0); render();
       };
     });
   }
-  function bindView(v) { $$("[data-view]", v).forEach(function (b) { b.onclick = function () { openViewer(b.getAttribute("data-view")); }; }); }
+  function bindView(v) { $$("[data-view]", v).forEach(function (b) { b.onclick = function (ev) { ev.stopPropagation(); openViewer(b.getAttribute("data-view")); }; }); }
 
   // ---------- 캘린더 ----------
   var calY = today().getFullYear(), calM = today().getMonth();
@@ -535,7 +591,7 @@ nav.tabs button.on span{filter:none;opacity:1}
     }
     return h + "</div>";
   }
-  function bindCal(v) { $$("[data-day]", v).forEach(function (b) { b.onclick = function () { openDay(b.getAttribute("data-day")); }; }); }
+  function bindCal(v) { $$("[data-day]", v).forEach(function (b) { b.onclick = function (ev) { ev.stopPropagation(); openDay(b.getAttribute("data-day")); }; }); }
   function viewCal(v, fab) {
     var s = settings();
     v.innerHTML = '<div class="card"><div class="cal-head"><button class="btn ghost small" data-m="-1">‹</button><b>' + calY + "년 " + (calM + 1) + '월</b><button class="btn ghost small" data-m="1">›</button></div>' +
@@ -558,7 +614,7 @@ nav.tabs button.on span{filter:none;opacity:1}
     });
   }
   function editEvent(e, date) {
-    var s = settings(), isNew = !e; e = e || { date: date, who: me() || "us", title: "", memo: "", photo: "" };
+    var s = settings(), isNew = !e; e = e || { date: date, who: "us", title: "", memo: "", photo: "" };
     var h = "<h3>" + (isNew ? "일정 추가" : "일정 고치기") + "</h3>" +
       '<div class="field"><label>날짜</label><input type="date" name="date" value="' + esc(e.date) + '"></div>' +
       '<div class="field"><label>제목</label><input name="title" maxlength="60" placeholder="예: 성수 데이트" value="' + esc(e.title) + '"></div>' +
@@ -583,7 +639,7 @@ nav.tabs button.on span{filter:none;opacity:1}
 
   // ---------- 지도 ----------
   var GEO = {}, mapMode = lsGet("ug_map", "cap");
-  var MAP_MODES = { cap: ["수도권", "geo/capital.json"], seoul: ["서울", "geo/capital.json"], kr: ["전국", "geo/korea.json"] };
+  var MAP_MODES = { cap: ["수도권", "geo/capital.json"], seoul: ["서울", "geo/capital.json"], inc: ["인천", "geo/capital.json"], kr: ["전국", "geo/korea.json"] };
   function loadGeo(file) {
     if (GEO[file]) return Promise.resolve(GEO[file]);
     return fetch(file).then(function (r) { return r.json(); }).then(function (j) { GEO[file] = j; return j; });
@@ -599,19 +655,55 @@ nav.tabs button.on span{filter:none;opacity:1}
     v.innerHTML = '<div class="card"><div class="row" style="margin-bottom:10px"><div class="chips">' +
       Object.keys(MAP_MODES).map(function (m) { return '<button class="chip' + (mapMode === m ? " on" : "") + '" data-mode="' + m + '">' + MAP_MODES[m][0] + "</button>"; }).join("") +
       '</div><span class="stat" style="margin-left:auto" id="mapStat"></span></div><div class="map-box" id="mapBox"><div class="empty">지도 불러오는 중…</div></div>' +
-      '<p class="muted" style="margin:8px 0 0">지역을 누르면 그곳에서 찍은 사진을 넣을 수 있어요.</p></div>';
+      '<p class="muted" style="margin:8px 0 0">지역을 누르면 그곳에서 찍은 사진을 넣을 수 있어요.' + (mapMode === "cap" ? ' <span style="color:var(--seoul);font-weight:700">━ 서울</span> <span style="color:#8e5cc9;font-weight:700">┅ 인천</span>' : "") + ' <span style="color:var(--home);font-weight:700">🏠 사는 곳</span></p></div>';
     $$("[data-mode]", v).forEach(function (b) { b.onclick = function () { mapMode = b.getAttribute("data-mode"); lsSet("ug_map", mapMode); render(); }; });
     var mode = mapMode;
-    loadGeo(MAP_MODES[mode][1]).then(function (geo) { if (mode === mapMode && tab === "map") drawMap(geo, mode); })
+    loadGeo(MAP_MODES[mode][1]).then(function (geo) { if (mode === mapMode && tab === "map") drawMap(geo, mode, $("#mapBox"), $("#mapStat"), false); })
       .catch(function () { $("#mapBox").innerHTML = '<div class="empty">지도를 못 불러왔어요</div>'; });
   }
-  function drawMap(geo, mode) {
-    var feats = geo.features.filter(function (f) { return mode !== "seoul" || f.properties.prov === "서울"; });
+  // 같은 시도 안에서 두 번 나오는 선(이웃 구와 맞닿은 선)을 빼면 바깥 테두리만 남는다
+  function outlinePath(feats, prov, px) {
+    var cnt = {}, seg = {};
+    feats.forEach(function (f) {
+      if (f.properties.prov !== prov) return;
+      polysOf(f.geometry).forEach(function (pl) {
+        pl.forEach(function (ring) {
+          for (var j = 0; j < ring.length - 1; j++) {
+            var a = ring[j].join(","), b = ring[j + 1].join(","), k = a < b ? a + "|" + b : b + "|" + a;
+            cnt[k] = (cnt[k] || 0) + 1; seg[k] = [ring[j], ring[j + 1]];
+          }
+        });
+      });
+    });
+    var d = "";
+    Object.keys(cnt).forEach(function (k) {
+      if (cnt[k] !== 1) return;
+      var p = px(seg[k][0]), q = px(seg[k][1]);
+      d += "M" + p[0].toFixed(1) + "," + p[1].toFixed(1) + "L" + q[0].toFixed(1) + "," + q[1].toFixed(1);
+    });
+    return d;
+  }
+  function drawMap(geo, mode, box, statEl, mini) {
+    var s = settings();
+    var PROV = { seoul: "서울", inc: "인천" };
+    var feats = geo.features.filter(function (f) { return !PROV[mode] || f.properties.prov === PROV[mode]; });
     var minX = 999, maxX = -999, minY = 999, maxY = -999;
-    feats.forEach(function (f) { polysOf(f.geometry).forEach(function (pl) { pl[0].forEach(function (p) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1]; }); }); });
+    // 인천 보기는 강화군·옹진군 섬을 빼고 시내 기준으로 크게 (섬은 화면 밖으로 잘림)
+    var fitFeats = mode === "inc" ? feats.filter(function (f) { return f.properties.code !== "23310" && f.properties.code !== "23320"; }) : feats;
+    fitFeats.forEach(function (f) { polysOf(f.geometry).forEach(function (pl) { pl[0].forEach(function (p) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1]; }); }); });
     var k = Math.cos((minY + maxY) / 2 * Math.PI / 180), W = 1000, sc = W / ((maxX - minX) * k), H = Math.round((maxY - minY) * sc);
     function px(p) { return [((p[0] - minX) * k * sc), ((maxY - p[1]) * sc)]; }
-    var regions = db.rec.region || {}, svgP = "", defs = "", imgs = "", labels = "", edges = "", vis = 0;
+    var regions = db.rec.region || {}, svgP = "", defs = "", imgs = "", labels = "", edges = "", vis = 0, centers = {};
+    var capGeo = GEO["geo/capital.json"];
+    function homeKeyFor(hk) { // 전국 지도에서는 사는 곳의 시도를 찾는다
+      if (!hk || mode !== "kr") return hk;
+      if (!capGeo) return "";
+      var f = capGeo.features.filter(function (x) { return "cap:" + x.properties.code === hk; })[0];
+      if (!f) return "";
+      var kf = geo.features.filter(function (x) { return x.properties.name.indexOf(f.properties.prov) === 0; })[0];
+      return kf ? "kr:" + kf.properties.code : "";
+    }
+    var homes = [[homeKeyFor(s.homeA), s.nameA, "a"], [homeKeyFor(s.homeB), s.nameB, "b"]].filter(function (x) { return x[0]; });
     feats.forEach(function (f, i) {
       var d = "", bx = [1e9, -1e9, 1e9, -1e9], area = 0, cx = 0, cy = 0;
       polysOf(f.geometry).forEach(function (pl) {
@@ -627,19 +719,31 @@ nav.tabs button.on span{filter:none;opacity:1}
         });
       });
       var key = regionKey(mode, f.properties.code), r = regions[key], ph = r && r.data && r.data.photo;
+      centers[key] = [cx, cy];
       if (r) vis++;
       svgP += '<path class="rg' + (r ? " v" : "") + '" d="' + d + '" data-rg="' + key + '" data-nm="' + esc(f.properties.name) + '"></path>';
       if (ph) {
-        defs += '<clipPath id="cp' + i + '"><path d="' + d + '"></path></clipPath>';
-        imgs += '<image data-ph="' + ph + '" href="' + thumbUrl(ph) + '" x="' + bx[0].toFixed(1) + '" y="' + bx[2].toFixed(1) + '" width="' + (bx[1] - bx[0]).toFixed(1) + '" height="' + (bx[3] - bx[2]).toFixed(1) + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#cp' + i + ')" style="pointer-events:none"></image>';
+        var cid = (mini ? "cm" : "cp") + i;
+        defs += '<clipPath id="' + cid + '"><path d="' + d + '"></path></clipPath>';
+        imgs += '<image data-ph="' + ph + '" href="' + thumbUrl(ph) + '" x="' + bx[0].toFixed(1) + '" y="' + bx[2].toFixed(1) + '" width="' + (bx[1] - bx[0]).toFixed(1) + '" height="' + (bx[3] - bx[2]).toFixed(1) + '" preserveAspectRatio="xMidYMid slice" clip-path="url(#' + cid + ')" style="pointer-events:none"></image>';
         edges += '<path class="edge" d="' + d + '"></path>';
       }
-      var showLabel = mode === "kr" || mode === "seoul" || (bx[1] - bx[0]) > 40;
-      if (showLabel && !ph) labels += '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) + '"' + (mode === "seoul" ? ' style="font-size:20px"' : mode === "kr" ? ' style="font-size:26px"' : ' style="font-size:15px"') + ">" + esc(f.properties.name.replace(/(특별자치도|특별자치시|특별시|광역시)$/, "").replace(/^(충청|전라|경상)(남|북)도$/, function (m0, a, b) { return a.charAt(0) + b; }).replace(/도$/, "")) + "</text>";
+      var isHome = homes.some(function (x) { return x[0] === key; });
+      var showLabel = !mini && !isHome && (mode !== "cap" || (bx[1] - bx[0]) > 40);
+      if (showLabel && !ph) labels += '<text x="' + cx.toFixed(1) + '" y="' + cy.toFixed(1) + '"' + (mode === "seoul" || mode === "inc" ? ' style="font-size:26px"' : mode === "kr" ? ' style="font-size:26px"' : ' style="font-size:15px"') + ">" + esc(f.properties.name.replace(/(특별자치도|특별자치시|특별시|광역시)$/, "").replace(/^(충청|전라|경상)(남|북)도$/, function (m0, a, b) { return a.charAt(0) + b; }).replace(/도$/, "")) + "</text>";
     });
-    $("#mapBox").innerHTML = '<svg viewBox="-4 -4 ' + (W + 8) + " " + (H + 8) + '"><defs>' + defs + "</defs>" + svgP + imgs + edges + labels + "</svg>";
-    $("#mapStat").innerHTML = "가본 곳 <b>" + vis + "</b>/" + feats.length;
-    $$("[data-rg]", $("#mapBox")).forEach(function (p) { p.onclick = function () { openRegion(p.getAttribute("data-rg"), p.getAttribute("data-nm")); }; });
+    var outl = "";
+    if (mode === "cap" || mode === "seoul") outl += '<path class="sb" d="' + outlinePath(feats, "서울", px) + '"></path>';
+    if (mode === "cap" || mode === "inc") outl += '<path class="ib" d="' + outlinePath(feats, "인천", px) + '"></path>';
+    var hm = "", fs = mini ? 64 : (mode === "cap" ? 30 : 34), rr = mini ? 16 : 9;
+    homes.forEach(function (x) {
+      var c = centers[x[0]]; if (!c) return;
+      hm += '<g class="home"><circle cx="' + c[0].toFixed(1) + '" cy="' + c[1].toFixed(1) + '" r="' + rr + '" fill="var(--home)" stroke="#fff" stroke-width="' + (rr / 3) + '"></circle>' +
+        '<text x="' + c[0].toFixed(1) + '" y="' + (c[1] - rr - 6).toFixed(1) + '" style="font-size:' + fs + 'px">🏠 ' + esc(x[1]) + "</text></g>";
+    });
+    box.innerHTML = '<svg style="overflow:hidden" viewBox="-4 -4 ' + (W + 8) + " " + (H + 8) + '"><defs>' + defs + "</defs>" + svgP + imgs + edges + outl + labels + hm + "</svg>";
+    if (statEl) statEl.innerHTML = "가본 곳 <b>" + vis + "</b>/" + feats.length;
+    if (!mini) $$("[data-rg]", box).forEach(function (p) { p.onclick = function () { openRegion(p.getAttribute("data-rg"), p.getAttribute("data-nm")); }; });
   }
   function openRegion(key, name) {
     var r = rec("region", key);
@@ -752,18 +856,24 @@ nav.tabs button.on span{filter:none;opacity:1}
       '<div class="field"><label>앱 이름</label><input name="title" maxlength="20" value="' + esc(s.title) + '"></div>' +
       '<div class="row"><div class="field" style="flex:1"><label>첫 번째 사람</label><input name="nameA" maxlength="10" value="' + esc(s.nameA) + '"></div><div class="field" style="flex:1"><label>두 번째 사람</label><input name="nameB" maxlength="10" value="' + esc(s.nameB) + '"></div></div>' +
       '<div class="field"><label>만난 날 (1일째)</label><input type="date" name="start" value="' + esc(s.start) + '"></div>' +
-      '<div class="field"><label>이 기기를 쓰는 사람</label><div class="chips" data-me><button type="button" class="chip' + (me() === "a" ? " on" : "") + '" data-v="a">' + esc(s.nameA) + '</button><button type="button" class="chip' + (me() === "b" ? " on" : "") + '" data-v="b">' + esc(s.nameB) + "</button></div></div>" +
+      '<div class="row"><div class="field" style="flex:1;min-width:0"><label>' + esc(s.nameA) + ' 사는 곳</label><select name="homeA"><option value="">불러오는 중…</option></select></div><div class="field" style="flex:1;min-width:0"><label>' + esc(s.nameB) + ' 사는 곳</label><select name="homeB"><option value="">불러오는 중…</option></select></div></div>' +
       '<div class="btns"><button class="btn" data-save>저장</button></div>' +
       '<hr style="border:0;border-top:1px solid var(--line);margin:18px 0">' +
       '<div class="muted">저장 상태: ' + (cloudOn() ? "둘이 같이 보는 중 (서버 연결됨)" : API_URL ? "전용 링크로 열지 않음 → 이 기기에만 저장" : "서버 연결 전 → 이 기기에만 저장") + " · 못 보낸 변경 " + cloud.outbox.length + "개</div>" +
       '<div class="btns"><button class="btn ghost small" data-speed>⏱ 속도 재기</button><button class="btn ghost small" data-fake>🧪 시험 사진 20장</button><button class="btn ghost small" data-unfake>시험 사진 지우기</button></div>' +
       '<pre class="muted" id="speedOut" style="white-space:pre-wrap;font-size:12px"></pre>';
     sheet(h, function (el, close) {
-      var who = me();
-      $$("[data-me] .chip", el).forEach(function (b) { b.onclick = function () { who = b.getAttribute("data-v"); $$("[data-me] .chip", el).forEach(function (q) { q.classList.toggle("on", q === b); }); }; });
+      var geoOk = false;
+      loadGeo("geo/capital.json").then(function (geo) {
+        var ord = { "서울": 0, "인천": 1, "경기": 2 };
+        var fs = geo.features.slice().sort(function (a, b) { return (ord[a.properties.prov] - ord[b.properties.prov]) || a.properties.name.localeCompare(b.properties.name, "ko"); });
+        var opts = '<option value="">선택 안 함</option>' + fs.map(function (f) { return '<option value="cap:' + f.properties.code + '">' + f.properties.prov + " " + esc(f.properties.name) + "</option>"; }).join("");
+        ["homeA", "homeB"].forEach(function (n) { var sel = $("[name=" + n + "]", el); sel.innerHTML = opts; sel.value = s[n] || ""; });
+        geoOk = true;
+      }).catch(function () {});
       $("[data-save]", el).onclick = function () {
-        lsSet("ug_me", who || "");
-        putRec("settings", "main", { title: $("[name=title]", el).value.trim() || "우리 기록", nameA: $("[name=nameA]", el).value.trim() || "나", nameB: $("[name=nameB]", el).value.trim() || "너", start: $("[name=start]", el).value });
+        putRec("settings", "main", Object.assign({}, (db.rec.settings && db.rec.settings.main && db.rec.settings.main.data) || {}, { title: $("[name=title]", el).value.trim() || "만능다이어리", nameA: $("[name=nameA]", el).value.trim() || "나", nameB: $("[name=nameB]", el).value.trim() || "너", start: $("[name=start]", el).value,
+          homeA: geoOk ? $("[name=homeA]", el).value : s.homeA, homeB: geoOk ? $("[name=homeB]", el).value : s.homeB }));
         close(); render();
       };
       $("[data-speed]", el).onclick = function () { speedTest($("#speedOut", el)); };
@@ -835,8 +945,9 @@ nav.tabs button.on span{filter:none;opacity:1}
     }
     cloud.outbox = (Array.isArray(x[1]) ? x[1] : []).concat(early);
     render(); showPending();
-    if (!settings().start && !me()) setTimeout(openSettings, 300);
-    return pull().then(flush);
+    // 전용 링크로 열었으면 서버에서 설정을 먼저 받아온 뒤, 그래도 없을 때만 설정 창을 연다
+    if (!cloudOn()) { if (!settings().start) setTimeout(openSettings, 300); return flush(); }
+    return pull().then(function () { if (!settings().start && !document.querySelector(".dim")) openSettings(); }).then(flush);
   });
   window.addEventListener("online", flush);
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pull(); });
