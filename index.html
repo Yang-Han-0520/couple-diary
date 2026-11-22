@@ -130,6 +130,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .ord .bt{display:flex;gap:4px;margin-top:4px}
 .ord .bt button{flex:1;border:0;background:var(--soft);border-radius:8px;padding:5px 0;font-size:12px;color:#6f6664}
 .ord .bt button.on{background:var(--accent);color:#fff}
+.ph-tile.day-cover{aspect-ratio:4/3;margin-bottom:10px}
 .day-sec{font-size:13px;font-weight:700;margin:16px 0 6px;color:#6f6664}
 /* 목록 */
 .list .item{display:flex;gap:12px;align-items:center;padding:11px 0;border-top:1px solid var(--line)}
@@ -870,11 +871,14 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     var all = dayItems()[k] || [], d = parseYmd(k), s = settings(), dr = dayRec(k);
     var es = all.filter(function (e) { return !e.auto; }), au = all.filter(function (e) { return e.auto && e.auto !== "day"; }), ps = dayPhotos(k);
     var h = "<h3>" + (d.getMonth() + 1) + "월 " + d.getDate() + "일 (" + DOW[d.getDay()] + ")</h3>";
+    var cv = dayCover(k), rest = ps.filter(function (id) { return id !== cv; });
     h += '<div class="day-sec">하루 기록</div>' + ((dr.title || dr.place || dr.memo || ps.length) ?
-      '<div style="margin-bottom:8px"><b>' + esc(dr.title || "") + "</b>" + (dr.place ? ' <span class="muted">📍 ' + esc(dr.place) + "</span>" : "") + (dr.memo ? '<div class="muted" style="white-space:pre-wrap;margin-top:3px">' + esc(dr.memo) + "</div>" : "") + "</div>" +
-      (ps.length ? '<div class="grid4">' + ps.map(function (id) { return '<button class="p" data-view="' + id + '" data-ph="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div>" : "")
+      (cv ? '<button class="ph-tile day-cover" data-view="' + cv + '" data-ph="' + cv + '"' + phStyle(cv) + "></button>" : "") +
+      '<div style="margin-bottom:8px"><b style="font-size:16px">' + esc(dr.title || "") + "</b>" + (dr.place ? '<div class="muted">📍 ' + esc(dr.place) + "</div>" : "") +
+      (dr.memo ? '<div style="white-space:pre-wrap;margin-top:6px;font-size:14px;line-height:1.6;color:#4a4241">' + esc(dr.memo) + "</div>" : "") + "</div>" +
+      (rest.length ? '<div class="grid4">' + rest.map(function (id) { return '<button class="p" data-view="' + id + '" data-ph="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div>" : "")
       : '<div class="muted">아직 없어요</div>') +
-      '<button class="btn ghost block small" style="margin-top:8px" data-dayed>' + (dr.title || dr.memo || ps.length ? "하루 기록 고치기 · 사진 순서" : "하루 기록 쓰기") + "</button>";
+      '<button class="btn ghost block small" style="margin-top:10px" data-dayed>' + (dr.title || dr.memo || ps.length ? "하루 기록 고치기 · 사진 순서 · 대표 사진" : "하루 기록 쓰기") + "</button>";
     h += '<div class="day-sec">일정</div>' + (es.length ? '<div class="list">' + es.map(function (e) {
       return '<div class="item" data-ed="' + e.id + '">' + (e.photo ? '<div class="th" data-ph="' + e.photo + '"' + phStyle(e.photo) + "></div>" : "") + '<div class="tx"><b>' + esc(e.title) + '</b><span class="muted">' + esc(e.who === "a" ? s.nameA : e.who === "b" ? s.nameB : "우리") + (evRange(e) ? " · " + evRange(e) : "") + (e.memo ? " · " + esc(e.memo) : "") + "</span></div>›</div>";
     }).join("") + "</div>" : '<div class="muted">일정이 없어요</div>');
@@ -1112,24 +1116,19 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   }
   function viewAlbum(v, fab) {
     var by = {};
-    Object.keys(db.photos).forEach(function (id) { var d = photoMeta(id).date || ""; (by[d] = by[d] || 1); });
+    Object.keys(db.photos).forEach(function (id) { by[photoMeta(id).date || ""] = 1; });
     var days = Object.keys(by).sort().reverse(), n = Object.keys(db.photos).length, h = "", curM = null;
     if (!n) h = '<div class="card"><div class="empty">데이트 사진을 올려 보세요<br><br><button class="btn" data-up>사진 올리기</button></div></div>';
     days.forEach(function (d) {
-      var mo = d.slice(0, 7);
+      var mo = d.slice(0, 7), x = parseYmd(d), r = d ? dayRec(d) : {};
       if (mo !== curM) { curM = mo; h += '<div class="month">' + (mo ? mo.replace("-", "년 ") + "월" : "날짜 없음") + "</div>"; }
-      var r = d ? dayRec(d) : {}, ps = d ? dayPhotos(d) : Object.keys(db.photos).filter(function (id) { return !photoMeta(id).date; });
-      var cv = d ? dayCover(d) : "", rest = ps.filter(function (id) { return id !== cv; });
-      h += '<div class="card day-card"><div class="dh"><div class="t"><b>' + (d ? dayLabel(d).replace(/^\d+년 /, "") : "날짜 없는 사진") + "</b>" + (r.title ? " · " + esc(r.title) : "") +
-        (r.place ? '<div class="muted">📍 ' + esc(r.place) + "</div>" : "") + (r.memo ? '<div class="memo">' + esc(r.memo) + "</div>" : "") + "</div>" +
-        (d ? '<button class="btn ghost small" data-dayed="' + d + '">' + (r.title || r.memo ? "고치기" : "기록 쓰기") + "</button>" : "") + "</div>" +
-        (cv ? '<button class="ph-tile cover" data-view="' + cv + '" data-ph="' + cv + '"' + phStyle(cv) + "></button>" : "") +
-        (rest.length ? '<div class="grid">' + rest.map(function (id) { return '<button class="p' + (thumbUrl(id) ? "" : " wait") + '" data-ph="' + id + '" data-view="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div>" : "") +
-        (!d ? '<div class="muted" style="margin-top:6px">사진을 누르고 "날짜 바꾸기"로 날짜를 정해 주세요</div>' : "") + "</div>";
+      var ps = d ? dayPhotos(d) : Object.keys(db.photos).filter(function (id) { return !photoMeta(id).date; });
+      h += '<div class="album-grp"><div class="gh"><b>' + (x ? (x.getMonth() + 1) + "월 " + x.getDate() + "일 (" + DOW[x.getDay()] + ")" : "날짜 정보 없음") + "</b>" +
+        (r.title ? " · " + esc(r.title) : "") + (r.place ? ' <span class="muted">📍 ' + esc(r.place) + "</span>" : "") + '</div><div class="grid">' +
+        ps.map(function (id) { return '<button class="p' + (thumbUrl(id) ? "" : " wait") + '" data-ph="' + id + '" data-view="' + id + '"' + phStyle(id) + "></button>"; }).join("") + "</div></div>";
     });
     v.innerHTML = '<div class="note-head"><h2>앨범</h2><span class="badge soft">' + n + "장</span></div>" + h;
     bindView(v);
-    $$("[data-dayed]", v).forEach(function (b) { b.onclick = function () { editDay(b.getAttribute("data-dayed")); }; });
     var up = $("[data-up]", v); if (up) up.onclick = function () { var f = $("#fileMulti"); f.value = ""; f.click(); };
     fab.classList.remove("hidden"); fab.onclick = function () { var f = $("#fileMulti"); f.value = ""; f.click(); };
   }
