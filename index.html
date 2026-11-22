@@ -72,6 +72,11 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .tile-ph .wd{font-size:12px;font-weight:600;opacity:.95}
 .tile-ph .dn{font-size:40px;font-weight:800;line-height:1.05;letter-spacing:-1.5px}
 .tile-ph .nm{font-size:12px;font-weight:600;opacity:.95;margin-top:2px}
+.card.tile-ph.plain{background:#fff;color:var(--ink)}
+.tile-ph.plain .dn{color:var(--accent)}
+.tile-ph.plain .wd,.tile-ph.plain .nm{color:var(--sub);opacity:1}
+.tile-ph .deco{position:absolute;top:14px;right:14px;opacity:.9}
+.tile-ph .pick{position:absolute;top:12px;left:14px;font-size:11px;color:var(--sub);font-weight:600}
 .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:4px}
 .grid4 .p,.grid2 .p{aspect-ratio:1;border-radius:10px;background:var(--land) center/cover;border:0;padding:0;display:block;width:100%}
@@ -606,10 +611,12 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     var s = settings(), start = parseYmd(s.start), t = today(), h = "";
     if (!cloudOn()) h += '<div class="banner">' + (API_URL ? '전용 링크로 열어야 둘이 같이 볼 수 있어요. 지금은 이 기기에만 저장돼요.<div class="btns" style="margin-top:8px"><button class="btn small" data-paste>전용 링크 붙여넣기</button></div>' : "아직 저장 서버 연결 전이에요. 지금은 이 기기에만 저장돼요.") + "</div>";
     h += installCard();
-    var ph = sortedPhotos(), cover = ph[0] && ph[0].id, cu = cover ? thumbUrl(cover) : "";
+    // 대표 사진은 직접 고른 것만 (없으면 흰 카드)
+    var ph = sortedPhotos(), cover = s.cover && db.photos[s.cover] ? s.cover : "", cu = cover ? thumbUrl(cover) : "";
     h += '<div class="hg">';
     // 대표 사진 + 만난 날 | 이번 달
-    h += '<button class="card tile-ph' + (cover ? " ph" : "") + '" data-go="' + (start ? "album" : "settings") + '"' + (cover ? ' data-ph="' + cover + '"' + (cu ? ' style="background-image:url(' + cu + ')"' : "") : "") + '>' +
+    h += '<button class="card tile-ph' + (cover ? " ph" : " plain") + '"' + (start ? " data-cover" : ' data-go="settings"') + (cover ? ' data-ph="' + cover + '"' + (cu ? ' style="background-image:url(' + cu + ')"' : "") : "") + '>' +
+      (cover ? "" : '<svg class="deco" width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="#e57c93" stroke-width="1.4" stroke-linejoin="round"><path d="M12 20.5l-1.2-1.1C6 15.1 3 12.4 3 9.1 3 6.4 5.1 4.3 7.8 4.3c1.6 0 3.1.7 4.2 1.9 1.1-1.2 2.6-1.9 4.2-1.9 2.7 0 4.8 2.1 4.8 4.8 0 3.3-3 6-7.8 10.3z"/></svg>' + (start ? '<span class="pick">대표 사진 넣기 ›</span>' : "")) +
       (start ? '<span class="wd">우리가 함께한 지</span><span class="dn">' + (daysBetween(start, t) + 1).toLocaleString() + '<small>일</small></span><span class="nm">' + esc(s.nameA) + " · " + esc(s.nameB) + "</span>"
         : '<span class="wd">시작하기</span><span class="dn" style="font-size:22px">만난 날 정하기</span>') + "</button>";
     h += '<div class="card"><h2>' + (t.getMonth() + 1) + '월<button class="more" data-go="cal">›</button></h2>' + calGrid(t.getFullYear(), t.getMonth(), true) + "</div>";
@@ -644,6 +651,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     bindGo(v); bindCal(v); bindView(v);
     $$("[data-tg]", v).forEach(function (b) { b.onclick = function () { var x = rec("bucket", b.getAttribute("data-tg")); var id = x.id; delete x.id; x.done = true; x.doneDate = ymd(today()); putRec("bucket", id, x); toast("🎉 달성!"); render(); }; });
     var up = $("[data-up]", v); if (up) up.onclick = function () { var f = $("#fileMulti"); f.value = ""; f.click(); };
+    var cv = $("[data-cover]", v); if (cv) cv.onclick = openCoverPicker;
     var ib = $("[data-install]", v); if (ib) ib.onclick = doInstall;
     // 아이폰 홈 화면 앱이 비밀키를 모를 때: 전용 링크를 붙여넣어 연결
     var pb = $("[data-paste]", v); if (pb) pb.onclick = function () {
@@ -655,6 +663,24 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     };
     var nb = $("[data-noinst]", v); if (nb) nb.onclick = function () { lsSet("ug_inst", "1"); render(); };
     loadGeo("geo/capital.json").then(function (geo) { var b = $("#mapMini"); if (b && tab === "home") drawMap(geo, "near", b, null, true); }).catch(function () {});
+  }
+  // 홈 대표 사진 고르기: 앨범에서 고르기 / 새로 올리기 / 사진 없이
+  function setCover(id) {
+    var cur = (db.rec.settings && db.rec.settings.main && db.rec.settings.main.data) || {};
+    putRec("settings", "main", Object.assign({}, cur, { cover: id || "" }));
+    render();
+  }
+  function openCoverPicker() {
+    var ps = sortedPhotos().slice(0, 60), cur = settings().cover;
+    var h = "<h3>대표 사진</h3>" + '<p class="muted" style="margin-top:-4px">홈 첫 칸에 보일 사진을 골라요.</p>' +
+      (ps.length ? '<div class="grid4" style="max-height:46vh;overflow:auto">' + ps.map(function (p) { return '<button class="p" data-pick="' + p.id + '" data-ph="' + p.id + '"' + phStyle(p.id) + (p.id === cur ? ' style="outline:3px solid var(--accent);outline-offset:-3px' + (thumbUrl(p.id) ? ";background-image:url(" + thumbUrl(p.id) + ")" : "") + '"' : "") + "></button>"; }).join("") + "</div>"
+        : '<div class="muted" style="padding:8px 0">앨범에 사진이 아직 없어요.</div>') +
+      '<div class="btns"><button class="btn ghost" data-none>사진 없이</button><button class="btn" data-new>새 사진 올리기</button></div>';
+    sheet(h, function (el, close) {
+      $$("[data-pick]", el).forEach(function (b) { b.onclick = function () { close(); setCover(b.getAttribute("data-pick")); }; });
+      $("[data-none]", el).onclick = function () { close(); setCover(""); };
+      $("[data-new]", el).onclick = function () { close(); pickPhoto().then(function (id) { setCover(id); }); };
+    });
   }
   function bindGo(v) {
     $$("[data-go]", v).forEach(function (b) {
