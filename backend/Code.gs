@@ -14,6 +14,13 @@ const PHOTO_FOLDER = '우리기록_사진';
 const MAX_CELL = 49000; // 구글 시트 한 칸 최대 5만 자
 const MAX_THUMBS_PER_CALL = 30;
 
+// 처음 한 번: 편집기 위쪽에서 이 함수를 고르고 ▶실행 → 시트·드라이브 권한 허용
+function 처음설정() {
+  shRec_();
+  shPhoto_();
+  Logger.log('사진 폴더: ' + folder_().getName());
+}
+
 function doGet(e) {
   return handle_((e && e.parameter) || {});
 }
