@@ -1,6 +1,6 @@
 {
-  "name": "만능다이어리",
-  "short_name": "만능다이어리",
+  "name": "우리의 여정",
+  "short_name": "우리의 여정",
   "description": "둘이 같이 쓰는 데이트 기록장",
   "lang": "ko",
   "start_url": "./",

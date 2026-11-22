@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>만능다이어리</title>
+<title>우리의 여정</title>
 <meta name="theme-color" content="#faf7f5">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
@@ -11,7 +11,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="만능다이어리">
+<meta name="apple-mobile-web-app-title" content="우리의 여정">
 <style>
 :root{
   --bg:#faf7f5; --card:#ffffff; --ink:#2f2a29; --sub:#9b918e; --line:#efe9e6; --soft:#f5f0ee;
@@ -215,7 +215,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 </head>
 <body>
 <header>
-  <h1><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#e57c93" d="M12 21.3l-1.4-1.3C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5z"/></svg><span id="appTitle">만능다이어리</span></h1>
+  <h1><svg width="20" height="20" viewBox="0 0 24 24"><path fill="#e57c93" d="M12 21.3l-1.4-1.3C5.4 15.4 2 12.3 2 8.5 2 5.4 4.4 3 7.5 3c1.7 0 3.4.8 4.5 2.1C13.1 3.8 14.8 3 16.5 3 19.6 3 22 5.4 22 8.5c0 3.8-3.4 6.9-8.6 11.5z"/></svg><span id="appTitle">우리의 여정</span></h1>
   <span class="sync" id="sync"></span>
   <button class="icon-btn" id="btnSettings" aria-label="설정"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
 </header>
@@ -292,7 +292,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   function recs(c) { var m = db.rec[c] || {}; return Object.keys(m).map(function (id) { return Object.assign({ id: id }, m[id].data || {}); }); }
   function rec(c, id) { var m = db.rec[c] || {}; return m[id] ? Object.assign({ id: id }, m[id].data) : null; }
   function settings() {
-    return Object.assign({ title: "만능다이어리", nameA: "나", nameB: "너", start: "", homeA: "", homeB: "" }, (rec("settings", "main") || {}));
+    return Object.assign({ title: "우리의 여정", nameA: "나", nameB: "너", start: "", homeA: "", homeB: "" }, (rec("settings", "main") || {}));
   }
   function myName() { return ""; } // 둘이 같이 쓰므로 기기별 사용자 구분은 하지 않음
   function saveLocal() { return kvSet("db", db); }
@@ -726,8 +726,8 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   }
   function render() {
     var s = settings();
-    $("#appTitle").textContent = s.title || "만능다이어리";
-    document.title = s.title || "만능다이어리";
+    $("#appTitle").textContent = s.title || "우리의 여정";
+    document.title = s.title || "우리의 여정";
     renderTabs();
     var v = $("#view"), fab = $("#fab");
     fab.classList.add("hidden"); fab.onclick = null;
@@ -1299,7 +1299,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
         geoOk = true;
       }).catch(function () {});
       $("[data-save]", el).onclick = function () {
-        putRec("settings", "main", Object.assign({}, (db.rec.settings && db.rec.settings.main && db.rec.settings.main.data) || {}, { title: $("[name=title]", el).value.trim() || "만능다이어리", nameA: $("[name=nameA]", el).value.trim() || "나", nameB: $("[name=nameB]", el).value.trim() || "너", start: $("[name=start]", el).value,
+        putRec("settings", "main", Object.assign({}, (db.rec.settings && db.rec.settings.main && db.rec.settings.main.data) || {}, { title: $("[name=title]", el).value.trim() || "우리의 여정", nameA: $("[name=nameA]", el).value.trim() || "나", nameB: $("[name=nameB]", el).value.trim() || "너", start: $("[name=start]", el).value,
           homeA: geoOk ? $("[name=homeA]", el).value : s.homeA, homeB: geoOk ? $("[name=homeB]", el).value : s.homeB }));
         close(); render();
       };
