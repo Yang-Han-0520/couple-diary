@@ -822,7 +822,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   function visitedCount() {
     var r = db.rec.region || {}, cap = 0, kr = 0;
     Object.keys(r).forEach(function (k) { if (k.indexOf("cap:") === 0) cap++; else if (k.indexOf("kr:") === 0) kr++; });
-    return { cap: cap, capAll: 66, kr: kr, krAll: 17 };
+    return { cap: cap, capAll: (GEO["geo/capital.json"] ? GEO["geo/capital.json"].features.length : 67), kr: kr, krAll: 17 };
   }
   function polysOf(g) { return g.type === "Polygon" ? [g.coordinates] : g.coordinates; }
   function viewMap(v) {
@@ -863,20 +863,18 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
     var feats = geo.features.filter(function (f) { return !PROV[mode] || f.properties.prov === PROV[mode]; });
     var minX = 999, maxX = -999, minY = 999, maxY = -999;
     // 인천 보기는 강화군·옹진군 섬을 빼고 시내 기준으로 크게 (섬은 화면 밖으로 잘림)
-    var fitFeats = mode === "inc" ? feats.filter(function (f) { return f.properties.code !== "23310" && f.properties.code !== "23320"; }) : feats;
+    var fitFeats = feats;
     // 우리 동네 보기: 두 사람 사는 곳(설정)이 딱 들어오게 확대 (나머지는 화면 밖으로 잘림)
     if (mode === "near") {
       var hc = [s.homeA, s.homeB].filter(Boolean).map(function (x) { return x.replace(/^cap:/, ""); });
       var hf = feats.filter(function (f) { return hc.indexOf(f.properties.code) >= 0; });
-      if (hf.length >= 2) {
-        // 서울 전체 + (사는 곳이 인천이면) 인천 시내·영종도까지. 강화군·옹진군 섬은 너무 멀어서 뺌
-        var incHome = hf.some(function (f) { return f.properties.prov === "인천"; });
-        fitFeats = hf.concat(feats.filter(function (f) {
-          return f.properties.prov === "서울" || (incHome && f.properties.prov === "인천" && f.properties.code !== "23310" && f.properties.code !== "23320");
-        }));
-      }
+      if (hf.length >= 2) fitFeats = hf.concat(feats.filter(function (f) { return f.properties.prov === "서울"; }));
     }
-    fitFeats.forEach(function (f) { polysOf(f.geometry).forEach(function (pl) { pl[0].forEach(function (p) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1]; }); }); });
+    fitFeats.forEach(function (f) { polysOf(f.geometry).forEach(function (pl) {
+      // 인천 보기: 서해 먼 섬(동경 126.2도보다 서쪽)은 화면 맞추기에서 뺌 → 강화도·영종도는 다 보이게
+      if (mode === "inc" && Math.max.apply(null, pl[0].map(function (p) { return p[0]; })) < 126.2) return;
+      pl[0].forEach(function (p) { if (p[0] < minX) minX = p[0]; if (p[0] > maxX) maxX = p[0]; if (p[1] < minY) minY = p[1]; if (p[1] > maxY) maxY = p[1]; }); }); });
+    if (mode === "inc") { var pX = (maxX - minX) * 0.03, pY = (maxY - minY) * 0.03; minX -= pX; maxX += pX; minY -= pY; maxY += pY; }
     if (mode === "near") { var padX = (maxX - minX) * 0.05, padY = (maxY - minY) * 0.07; minX -= padX; maxX += padX; minY -= padY; maxY += padY; }
     var k = Math.cos((minY + maxY) / 2 * Math.PI / 180), W = 1000, sc = W / ((maxX - minX) * k), H = Math.round((maxY - minY) * sc);
     function px(p) { return [((p[0] - minX) * k * sc), ((maxY - p[1]) * sc)]; }
