@@ -199,7 +199,13 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
 .rate button.on{color:#e8a93a}
 .pick-ph{width:100%;height:150px;border:1.5px dashed #ddd3d0;border-radius:14px;background:#fcfbfa center/cover no-repeat;display:flex;align-items:center;justify-content:center;color:var(--sub);font-weight:600}
 .viewer{position:fixed;inset:0;background:#000;z-index:30;display:flex;flex-direction:column}
-.viewer img{flex:1;min-height:0;object-fit:contain;width:100%}
+.viewer .vimg{flex:1;min-height:0;position:relative;display:flex;touch-action:pan-y}
+.viewer img{flex:1;min-height:0;min-width:0;object-fit:contain;width:100%;transition:transform .12s}
+.viewer .vt{display:flex;align-items:center;justify-content:space-between;color:#ddd;font-size:13px;padding:calc(10px + env(safe-area-inset-top)) 16px 6px}
+.viewer .vx{border:0;background:rgba(255,255,255,.15);color:#fff;width:34px;height:34px;border-radius:50%;font-size:16px}
+.viewer .vnav{position:absolute;top:50%;transform:translateY(-50%);border:0;background:rgba(255,255,255,.14);color:#fff;width:38px;height:38px;border-radius:50%;font-size:24px;line-height:1}
+.viewer .vnav.l{left:10px}.viewer .vnav.r{right:10px}
+.viewer .vinfo{color:#fff;padding:10px 16px 0;font-size:14px;line-height:1.5}
 .viewer .vb{display:flex;gap:8px;padding:12px 16px calc(12px + env(safe-area-inset-bottom));justify-content:space-between;color:#fff;align-items:center}
 .toast{position:fixed;left:50%;bottom:calc(150px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:12px;font-size:14px;z-index:40;max-width:90vw}
 .empty{text-align:center;color:var(--sub);padding:22px 0;font-size:14px}
@@ -596,30 +602,79 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   }
   function phStyle(id) { var u = thumbUrl(id); return u ? ' style="background-image:url(' + u + ')"' : ""; }
 
-  function openViewer(id) {
-    var p = db.photos[id]; if (!p) return;
-    var v = document.createElement("div"); v.className = "viewer";
-    var m = photoMeta(id), dr = m.date ? dayRec(m.date) : {};
-    v.innerHTML = '<img alt="" src="' + (thumbs[id] || "") + '"><div style="color:#fff;padding:10px 16px 0;font-size:14px;line-height:1.5"><b>' + esc(m.date ? m.date.replace(/-/g, ".") : "날짜 없음") + "</b>" + (dr.title ? " · " + esc(dr.title) : "") + (dr.place ? " · 📍 " + esc(dr.place) : "") + '</div><div class="vb"><button class="btn ghost small" data-x>닫기</button><button class="btn ghost small" data-meta>날짜 바꾸기</button><button class="btn warn small" data-del>지우기</button></div>';
-    document.body.appendChild(v);
-    var img = $("img", v);
-    kvGet("f:" + id).then(function (f) {
-      f = f || (pendingPh[id] && pendingPh[id].f);
-      if (f) { img.src = f; return; }
-      if (!cloudOn()) return;
-      api({ a: "full", id: id }).then(function (d) { if (d.full) img.src = "data:image/jpeg;base64," + d.full; }).catch(function () {});
+  // 앨범에 보이는 순서 (날짜 최신순 → 그날 정한 순서), 날짜 없는 사진은 맨 뒤
+  function albumOrder() {
+    var by = {};
+    Object.keys(db.photos).forEach(function (id) { by[photoMeta(id).date || ""] = 1; });
+    var out = [];
+    Object.keys(by).sort().reverse().forEach(function (d) {
+      out = out.concat(d ? dayPhotos(d) : Object.keys(db.photos).filter(function (id) { return !photoMeta(id).date; }));
     });
-    $("[data-x]", v).onclick = function () { v.remove(); };
-    $("[data-meta]", v).onclick = function () { v.remove(); editPhotoMeta(id); };
+    return out;
+  }
+  var fullMem = {}; // 이번에 열어본 큰 사진 (넘길 때 다시 안 받게)
+  function loadFull(id) {
+    if (fullMem[id]) return Promise.resolve(fullMem[id]);
+    return kvGet("f:" + id).then(function (f) {
+      f = f || (pendingPh[id] && pendingPh[id].f);
+      if (f) return f;
+      if (!cloudOn()) return "";
+      return api({ a: "full", id: id }).then(function (d) { return d.full ? "data:image/jpeg;base64," + d.full : ""; }).catch(function () { return ""; });
+    }).then(function (u) { if (u) fullMem[id] = u; return u; });
+  }
+  // 사진 크게 보기: 옆으로 밀면 앞뒤 사진 (그날 사진이 끝나면 다음 날짜로 이어짐)
+  function openViewer(id) {
+    if (!db.photos[id]) return;
+    var list = albumOrder(), idx = Math.max(0, list.indexOf(id));
+    var v = document.createElement("div"); v.className = "viewer";
+    v.innerHTML = '<div class="vt"><span data-n></span><button class="vx" data-x aria-label="닫기">✕</button></div>' +
+      '<div class="vimg"><img alt=""><button class="vnav l" data-prev aria-label="이전">‹</button><button class="vnav r" data-next aria-label="다음">›</button></div>' +
+      '<div class="vinfo" data-info></div><div class="vb"><button class="btn ghost small" data-meta>날짜 바꾸기</button><button class="btn warn small" data-del>지우기</button></div>';
+    document.body.appendChild(v);
+    var img = $("img", v), cur = "";
+    function show(i) {
+      if (i < 0 || i >= list.length) return;
+      idx = i; cur = list[i];
+      var m = photoMeta(cur), dr = m.date ? dayRec(m.date) : {};
+      $("[data-n]", v).textContent = (i + 1) + " / " + list.length;
+      $("[data-info]", v).innerHTML = "<b>" + esc(m.date ? dayLabel(m.date) : "날짜 없음") + "</b>" + (dr.title ? " · " + esc(dr.title) : "") + (dr.place ? " · 📍 " + esc(dr.place) : "");
+      $("[data-prev]", v).style.visibility = i > 0 ? "visible" : "hidden";
+      $("[data-next]", v).style.visibility = i < list.length - 1 ? "visible" : "hidden";
+      img.src = fullMem[cur] || thumbs[cur] || thumbUrl(cur) || "";
+      var want = cur;
+      loadFull(cur).then(function (u) { if (u && want === cur) img.src = u; });
+      if (list[i + 1]) { thumbUrl(list[i + 1]); loadFull(list[i + 1]); } // 다음 사진 미리 받기
+    }
+    function close() { document.removeEventListener("keydown", onKey); v.remove(); }
+    function onKey(e) { if (e.key === "ArrowRight") show(idx + 1); else if (e.key === "ArrowLeft") show(idx - 1); else if (e.key === "Escape") close(); }
+    document.addEventListener("keydown", onKey);
+    // 밀어서 넘기기
+    var sx = null, sy = 0, box = $(".vimg", v);
+    box.addEventListener("touchstart", function (e) { if (e.touches.length === 1) { sx = e.touches[0].clientX; sy = e.touches[0].clientY; } }, { passive: true });
+    box.addEventListener("touchmove", function (e) { if (sx === null) return; var dx = e.touches[0].clientX - sx; img.style.transform = "translateX(" + dx + "px)"; }, { passive: true });
+    box.addEventListener("touchend", function (e) {
+      if (sx === null) return;
+      var t = e.changedTouches[0], dx = t.clientX - sx, dy = t.clientY - sy; sx = null; img.style.transform = "";
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy)) show(dx < 0 ? idx + 1 : idx - 1);
+    });
+    $("[data-prev]", v).onclick = function () { show(idx - 1); };
+    $("[data-next]", v).onclick = function () { show(idx + 1); };
+    $("[data-x]", v).onclick = close;
+    $("[data-meta]", v).onclick = function () { var id2 = cur; close(); editPhotoMeta(id2); };
     $("[data-del]", v).onclick = function () {
       if (!confirm("이 사진을 지울까요?")) return;
-      if (rec("pmeta", id)) delRec("pmeta", id);
-      delete db.photos[id]; delete thumbs[id]; kvDel("t:" + id); kvDel("f:" + id); saveLocal();
-      cloud.outbox = cloud.outbox.filter(function (op) { return !(op.a === "upPhoto" && op.id === id); });
-      queue({ a: "delPhoto", id: id });
-      v.remove(); render();
+      var id2 = cur;
+      if (rec("pmeta", id2)) delRec("pmeta", id2);
+      delete db.photos[id2]; delete thumbs[id2]; delete fullMem[id2]; kvDel("t:" + id2); kvDel("f:" + id2); saveLocal();
+      cloud.outbox = cloud.outbox.filter(function (op) { return !(op.a === "upPhoto" && op.id === id2); });
+      queue({ a: "delPhoto", id: id2 });
+      list.splice(idx, 1); render();
+      if (!list.length) return close();
+      show(Math.min(idx, list.length - 1));
     };
+    show(idx);
   }
+
 
   // ================= 시트(창) =================
   function sheet(html, onMount) {
@@ -1324,7 +1379,7 @@ nav.tabs button.on{color:var(--accent);font-weight:700}
   window.addEventListener("online", flush);
   document.addEventListener("visibilitychange", function () { if (document.visibilityState === "visible") pull(); });
   if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(function () {});
-  window.__ug = { ready: ready, db: function () { return db; }, cloud: cloud, setApi: function (u) { API_URL = u; }, pull: pull, flush: flush, render: render, putRec: putRec, addPhotoData: addPhotoData, exifDate: exifDate, editDay: editDay, dayPhotos: dayPhotos, dayCover: dayCover };
+  window.__ug = { ready: ready, db: function () { return db; }, cloud: cloud, setApi: function (u) { API_URL = u; }, pull: pull, flush: flush, render: render, putRec: putRec, addPhotoData: addPhotoData, openViewer: openViewer, albumOrder: albumOrder, exifDate: exifDate, editDay: editDay, dayPhotos: dayPhotos, dayCover: dayCover };
 })();
 </script>
 </body>
